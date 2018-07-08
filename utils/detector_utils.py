@@ -39,7 +39,7 @@ MODEL_NAME = 'hand_detector_inference_graph'
 PATH_TO_CKPT = MODEL_NAME + '/frozen_inference_graph.pb'
 
 # List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = os.path.join('training', 'object-detection.pbtxt')
+PATH_TO_LABELS = os.path.join(MODEL_NAME, 'object-detection.pbtxt')
 
 NUM_CLASSES = 6
 

@@ -1,0 +1,3 @@
+[submodule "autopilot"]
+	path = autopilot
+	url = https://github.com/SubhiH/Autopilot.git

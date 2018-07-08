@@ -1,0 +1,24 @@
+item {
+  id: 1
+  name: '1-hand'
+}
+item {
+  id: 2
+  name: '2-hand'
+}
+item {
+  id: 3
+  name: '3-hand'
+}
+item {
+  id: 4
+  name: '4-hand'
+}
+item {
+  id: 5
+  name: '5-hand'
+}
+item {
+  id: 6
+  name: '0-hand'
+}

@@ -30,15 +30,35 @@ class hand_gesture_detector:
 		# max number of hands we want to detect/track
 		self.num_hands_detect = 2
 
-		#initialize the root window and image panel
+		#initialize UI window
 		self.root = Tk()
+
 		self.panel = None
+		self.image = None
+
+		self.panel = Label(image=self.image)
+		self.panel.image = self.image
+		self.panel.grid(row=0,column=3,rowspan=3,sticky=NSEW)
+
+		self.ip_lbl = Label( self.root, text='IP',justify=LEFT).grid(row=0,column=0,sticky=NW,padx=5)
+		self.port_lbl = Label( self.root, text='Port',justify=LEFT).grid(row=0,column=1,sticky=NW)
+
+		self.ip_entry = Entry(self.root,width=10).grid(row=1,column=0,sticky=NW,padx=5)
+		self.ip_entry = Entry(self.root,width=5).grid(row=1,column=1,sticky=NW)
+		self.connect_btn = Button(self.root, text ="Connect", command = self.connect_to_autopilot).grid(row=1,column=2,sticky=NW,padx=5)
+
+		# self.ip_entry.pack(side=LEFT,pady=(5,0))
 		self.scrolled_text= ScrolledText(self.root, wrap=tk.WORD,width=40,bg='black')
-		self.scrolled_text.pack(side=RIGHT, fill=Y, expand=1)
+		self.scrolled_text.grid(row=2,column=0,columnspan=3)
+		# self.scrolled_text.pack(side=LEFT,pady=(50,0), expand=1)
 		self.scrolled_text.tag_config('normal', foreground='white')
-		self.scrolled_text.tag_config('telemetry', foreground='red')
+		self.scrolled_text.tag_config('telemetry', foreground='green')
+		self.scrolled_text.tag_config('error', foreground='green')
+
 		
-		self.scrolled_text.yview(tk.END)
+
+		
+		# self.scrolled_text.yview(tk.END)
 
 		self.thread = threading.Thread(target=self.videoLoop, args=())
 		self.thread.start()
@@ -105,6 +125,10 @@ class hand_gesture_detector:
 			self.gestures_queue_first.put(-1)
 			self.gestures_queue_second.put(-1)
 
+
+	def connect_to_autopilot():
+		tkMessageBox.showinfo( "Connect", "connect_to_autopilot")
+
 	def onClose(self):
 		# set the stop event, cleanup the camera, and allow the rest of
 		# the quit process to continue
@@ -128,23 +152,14 @@ class hand_gesture_detector:
 
 				boxes, scores, classes = detector_utils.detect_objects(
 					image_np, detection_graph, sess)
-				image = cv2.cvtColor(self.output_img,cv2.COLOR_BGR2RGB)
-				image = Image.fromarray(image)
-				image = ImageTk.PhotoImage(image)
+				self.image = cv2.cvtColor(self.output_img,cv2.COLOR_BGR2RGB)
+				self.image = Image.fromarray(self.image)
+				self.image = ImageTk.PhotoImage(self.image)
 
-				if self.panel is None:
-					self.panel = Label(image=image)
-					self.panel.image = image
-					self.panel.pack(side="left", padx=2, pady=2)
-					# self.scrolled_text.insert(tk.INSERT,"N")
-					
-
-					
-				else:
-					self.panel.configure(image=image)
-					self.panel.image = image
-					self.scrolled_text.insert(END, "message to be sent \n", 'normal')
-					self.scrolled_text.insert(END, "incoming message \n", 'telemetry')
+				self.panel.configure(image=self.image)
+				self.panel.image = self.image
+				self.scrolled_text.insert(END, "message to be sent \n", 'normal')
+				self.scrolled_text.insert(END, "incoming message \n", 'telemetry')
 					
 
 				#filter by score

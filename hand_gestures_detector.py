@@ -19,13 +19,21 @@ import Queue
 
 
 detection_graph, sess = detector_utils.load_inference_graph()
+
 class hand_gesture_detector:
 
 	def __init__(self,video_streaming_obj):
 		self.video_streaming_obj = video_streaming_obj
 		self.frame = None
-		self.thread = None
+		self.streaming_thread = None
 		self.stopEvent = threading.Event()
+
+		#Autpilot
+		self.autopilot_thread = None
+		self.autopilot_obj = None
+		self.is_connected_to_autopilot = False
+		self.autopilot_incoming_msgs_stack = []
+		self.autopilot_sending_msgs_stack = []
 
 		# max number of hands we want to detect/track
 		self.num_hands_detect = 2
@@ -43,8 +51,10 @@ class hand_gesture_detector:
 		self.ip_lbl = Label( self.root, text='IP',justify=LEFT).grid(row=0,column=0,sticky=NW,padx=5)
 		self.port_lbl = Label( self.root, text='Port',justify=LEFT).grid(row=0,column=1,sticky=NW)
 
-		self.ip_entry = Entry(self.root,width=10).grid(row=1,column=0,sticky=NW,padx=5)
-		self.ip_entry = Entry(self.root,width=5).grid(row=1,column=1,sticky=NW)
+		self.ip_entry = Entry(self.root,width=10)
+		self.ip_entry.grid(row=1,column=0,sticky=NW,padx=5)
+		self.port_entry = Entry(self.root,width=5)
+		self.port_entry.grid(row=1,column=1,sticky=NW)
 		self.connect_btn = Button(self.root, text ="Connect", command = self.connect_to_autopilot).grid(row=1,column=2,sticky=NW,padx=5)
 
 		# self.ip_entry.pack(side=LEFT,pady=(5,0))
@@ -54,14 +64,11 @@ class hand_gesture_detector:
 		self.scrolled_text.tag_config('normal', foreground='white')
 		self.scrolled_text.tag_config('telemetry', foreground='green')
 		self.scrolled_text.tag_config('error', foreground='green')
-
+		####
 		
-
-		
-		# self.scrolled_text.yview(tk.END)
-
-		self.thread = threading.Thread(target=self.videoLoop, args=())
-		self.thread.start()
+		#
+		self.streaming_thread = threading.Thread(target=self.videoLoop, args=())
+		self.streaming_thread.start()
 
 		# set a callback to handle when the window is closed
 		self.root.wm_title("Hand Gestures Detector")
@@ -108,7 +115,7 @@ class hand_gesture_detector:
 		self.lock_wheel = False
 		self.num_of_frames_lock_wheel=0
 
-		self.arrow_shift = 0;
+		self.arrow_shift = 0
 
 		#Control Mode
 		control_mode = {}
@@ -126,8 +133,29 @@ class hand_gesture_detector:
 			self.gestures_queue_second.put(-1)
 
 
-	def connect_to_autopilot():
-		tkMessageBox.showinfo( "Connect", "connect_to_autopilot")
+	def connect_to_autopilot(self):
+		if not self.ip_entry.get()=="" and not self.port_entry.get()=="":
+			if self.is_connected_to_autopilot:
+				self.scrolled_text.insert(END, "Already Connected to Vehcile! \n", 'error')
+			else:
+				self.autopilot_thread = threading.Thread(target=self.handle_autopilot, args=())
+				self.autopilot_thread.start()
+		else:
+			self.scrolled_text.insert(END, "Enter IP:Port \n", 'error')
+
+		# tkMessageBox.showinfo( "Connect", "connect_to_autopilot")
+
+	def handle_autopilot(self):
+		while self.is_connected_to_autopilot:
+			if len(self.autopilot_incoming_msgs_stack)>0:
+				telemetry_msg = self.autopilot_incoming_msgs_stack.pop()
+				self.scrolled_text.insert(END, telemetry_msg+"\n", 'telemetry')
+
+			if len(self.autopilot_sending_msgs_stack)>0:
+				send_msg = self.autopilot_incoming_msgs_stack.pop()
+				self.scrolled_text.insert(END, telemetry_msg+"\n", 'telemetry')
+
+			
 
 	def onClose(self):
 		# set the stop event, cleanup the camera, and allow the rest of
@@ -158,8 +186,8 @@ class hand_gesture_detector:
 
 				self.panel.configure(image=self.image)
 				self.panel.image = self.image
-				self.scrolled_text.insert(END, "message to be sent \n", 'normal')
-				self.scrolled_text.insert(END, "incoming message \n", 'telemetry')
+				# self.scrolled_text.insert(END, "message to be sent \n", 'normal')
+				# self.scrolled_text.insert(END, "incoming message \n", 'telemetry')
 					
 
 				#filter by score
@@ -361,272 +389,6 @@ class hand_gesture_detector:
 				else:
 					print 'No HANDS *_*', len(filtered_boxes)
 				
-
-				'''
-				if len(filtered_scores)>1 and not self.prev_box_1 is None and not self.prev_box_2 is None:
-					(left_1, right_1, top_1, bottom_1) = (filtered_boxes[0][1] * im_width, filtered_boxes[0][3] * im_width,
-											filtered_boxes[0][0] * im_height, filtered_boxes[0][2] * im_height)
-
-					width_1 = right_1 - left_1
-					height_1 = bottom_1 - top_1
-
-					(left_2, right_2, top_2, bottom_2) = (filtered_boxes[1][1] * im_width, filtered_boxes[1][3] * im_width,
-											filtered_boxes[1][0] * im_height, filtered_boxes[1][2] * im_height)
-
-					width_2 = right_2 - left_2
-					height_2 = bottom_2 - top_2
-
-					
-
-					x1,y1,w_1,h_1,right_1, right_2,left_1,left_2 = detector_utils.calculate_intersection(filtered_boxes[0],self.prev_box_1,im_width,im_height)
-					x2,y2,w_2,h_2,right_12, right_22,left_12,left_22 = detector_utils.calculate_intersection(filtered_boxes[0],self.prev_box_2,im_width,im_height)
-					if w_1*h_1>=w_2*h_2:
-						self.prev_box_1 = self.box_1
-						self.box_1 = filtered_boxes[0]
-						self.prev_first_hand_shape = self.first_hand_shape
-						self.first_hand_shape = filtered_classes[0];
-
-						self.prev_first_sample_points_xy = self.first_sample_points_xy
-						self.first_sample_points_xy = [(int(left_1+width_1/4),int(top_1+height_1/4)),
-											 (int(right_1-width_1/4),int(top_1+height_1/4)),
-											 (int(left_1+width_1/4),int(bottom_1-height_1/4)),
-											 (int(right_1-width_1/4),int(bottom_1-height_1/4)),
-											 (int(right_1-width_1/2),int(bottom_1-height_1/2))]
-
-						self.prev_box_2 = self.box_2
-						self.box_2 = filtered_boxes[1]
-						self.prev_second_hand_shape = self.second_hand_shape
-						self.second_hand_shape = filtered_classes[1];
-
-						self.prev_second_sample_points_xy = self.second_sample_points_xy
-						self.second_sample_points_xy = [(int(left_2+width_2/4),int(top_2+height_2/4)),
-											 (int(right_2-width_2/4),int(top_2+height_2/4)),
-											 (int(left_2+width_2/4),int(bottom_2-height_2/4)),
-											 (int(right_2-width_2/4),int(bottom_2-height_2/4)),
-											 (int(right_2-width_2/2),int(bottom_2-height_2/2))]
-
-
-					else:
-						self.prev_box_1 = self.box_1
-						self.box_1 = filtered_boxes[1]
-						self.prev_first_hand_shape = self.first_hand_shape
-						self.first_hand_shape = filtered_classes[1];
-
-						self.prev_first_sample_points_xy = self.first_sample_points_xy
-						self.first_sample_points_xy = [(int(left_2+width_2/4),int(top_2+height_2/4)),
-											 (int(right_2-width_2/4),int(top_2+height_2/4)),
-											 (int(left_2+width_2/4),int(bottom_2-height_2/4)),
-											 (int(right_2-width_2/4),int(bottom_2-height_2/4)),
-											 (int(right_2-width_2/2),int(bottom_2-height_2/2))]
-
-					for k in range(5):
-							cv2.circle(image_np,self.first_sample_points_xy[k], 2, (0,0,255), -1)
-							cv2.line(image_np,self.prev_first_sample_points_xy[k],self.first_sample_points_xy[k],(255,0,0),1)
-
-							cv2.circle(image_np,self.second_sample_points_xy[k], 2, (0,0,255), -1)
-							cv2.line(image_np,self.prev_second_sample_points_xy[k],self.second_sample_points_xy[k],(255,0,0),1)
-
-					
-
-				elif  len(filtered_scores)==1 and self.prev_box_1 is None and not self.box_1 is None:
-					print 'initial'
-					self.prev_box_1 = self.box_1
-				elif len(filtered_scores)==1 and self.prev_box_1 is None and  self.box_1 is None:
-					self.box_1 = filtered_boxes[0]
-				elif len(filtered_scores)==1 and self.box_1 is None and self.box_2 is None:
-					print 'BOTH None'
-					self.box_1 = filtered_boxes[0]
-				elif len(filtered_scores)==2:
-					self.prev_second_hand_shape = self.second_hand_shape
-					self.second_hand_shape = filtered_classes[i];
-
-					self.prev_box_2 = self.box_2;
-					self.box_2 = filtered_boxes[i]
-				else:
-					print 'Unsolved :D'
-				'''
-
-
-
-
-
-				'''
-				for i in range(len(filtered_scores)):
-				# 	self.num_of_frames_without_hands = 0
-					
-					accepted_hands_count+=1;
-
-					if accepted_hands_count>2:
-						break;
-
-					
-					(left, right, top, bottom) = (filtered_boxes[i][1] * im_width, filtered_boxes[i][3] * im_width,
-												  filtered_boxes[i][0] * im_height, filtered_boxes[i][2] * im_height)
-					p1 = (int(left), int(top))
-					p2 = (int(right), int(bottom))
-
-					width = right - left;
-					height = bottom - top;
-
-
-
-
-
-						
-
-
-					
-
-					if accepted_hands_count == 1:	
-						self.prev_second_hand_shape = self.second_hand_shape
-						self.second_hand_shape = -1;
-
-						self.first_sample_points_xy = [(int(left+width/4),int(top+height/4)),
-											 (int(right-width/4),int(top+height/4)),
-											 (int(left+width/4),int(bottom-height/4)),
-											 (int(right-width/4),int(bottom-height/4)),
-											 (int(right-width/2),int(bottom-height/2))]
-
-						for k in range(5):
-							cv2.circle(image_np,self.first_sample_points_xy[k], 2, (0,0,255), -1)
-							cv2.line(image_np,self.prev_first_sample_points_xy[k],self.first_sample_points_xy[k],(255,0,0),1)
-
-						self.prev_first_sample_points_xy = self.first_sample_points_xy
-
-						if self.prev_box_1 is None and not self.box_1 is None:
-							print 'initial'
-							self.prev_box_1 = self.box_1
-
-						if self.box_1 is None and self.box_2 is None:
-							print 'BOTH None'
-							self.box_1 = filtered_boxes[i]
-
-						if self.box_1 is None and not self.box_2 is None:
-							print '1st None, 2nd NOT None'
-							self.box_1 = self.box_2
-							self.prev_box_1 = self.prev_box_2
-							self.prev_first_hand_shape = self.second_hand_shape
-							self.first_hand_shape = filtered_classes[i];
-							self.prev_second_hand_shape = -1
-							self.second_hand_shape = -1;
-							self.box_2 = None
-							self.prev_box_2 = None
-
-
-
-						if not self.prev_box_1 is None and not self.prev_box_2 is None:
-							print 'BOTH NOT None'
-							x1,y1,w_1,h_1,right_1, right_2,left_1,left_2 = detector_utils.calculate_intersection(filtered_boxes[i],self.prev_box_1,im_width,im_height)
-							x2,y2,w_2,h_2,right_12, right_22,left_12,left_22 = detector_utils.calculate_intersection(filtered_boxes[i],self.prev_box_2,im_width,im_height)
-
-							# if w_1*h_1 >= w_2*h_2:
-							width = 
-							if len(filtered_classes)>1:
-								(left_1, right_1, top_1, bottom_1) = (filtered_classes[0][1] * im_width, filtered_classes[0][3] * im_width,
-                                              filtered_classes[0][0] * im_height, filtered_classes[0][2] * im_height)
-								(left_2, right_2, _, _) = (filtered_classes[1][1] * im_width, filtered_classes[1][3] * im_width,
-                                              filtered_classes[1][0] * im_height, filtered_classes[1][2] * im_height)
-								if 
-							self.prev_box_1 = self.box_1
-							self.box_1 = filtered_boxes[i]
-							self.prev_first_hand_shape = self.first_hand_shape
-							self.first_hand_shape = filtered_classes[i];
-							print len(filtered_classes)
-							# else:
-								# if self.num_of_frames_before_flip_hand_boxes>=3:
-									# print filtered_boxes[i],self.prev_box_1,self.prev_box_2
-								# print 'change', x1,y1,w_1,h_1,right_1, right_2,left_1,left_2,' ',x2,y2,w_2,h_2,right_12, right_22,left_12,left_22
-								# self.num_of_frames_before_flip_hand_boxes=0;
-								# #change previous boxes - first <-> second
-								# tmp_box = self.prev_box_1
-								# self.prev_box_1 = self.prev_box_2
-								# self.prev_box_2 = tmp_box
-
-								# tmp_hand_shape = self.prev_first_hand_shape
-								# self.prev_first_hand_shape = self.prev_second_hand_shape
-								# self.prev_second_hand_shape = tmp_hand_shape
-
-
-								# self.prev_first_hand_shape = self.second_hand_shape
-								# self.second_hand_shape = self.first_hand_shape
-
-								# self.first_hand_shape = filtered_classes[i];
-
-								# self.prev_box_1 = self.box_1
-								# self.box_1 = filtered_boxes[i]
-
-								# tmp_queue = Queue.Queue()
-								# tmp_queue = self.gestures_queue_first;
-								# self.gestures_queue_first = self.gestures_queue_second
-								# self.gestures_queue_second = tmp_queue
-
-								# tmp_sample = self.first_sample_points_xy
-								# self.first_sample_points_xy = self.second_sample_points_xy
-								# self.second_sample_points_xy = tmp_sample
-
-								# prev_tmp_sample = self.prev_first_sample_points_xy
-								# self.prev_first_sample_points_xy = self.prev_second_sample_points_xy
-								# self.prev_second_sample_points_xy = prev_tmp_sample
-
-								# else:
-								# 	print 'num_of_frames_before_flip_hand_boxes: ',self.num_of_frames_before_flip_hand_boxes
-								# 	self.num_of_frames_before_flip_hand_boxes += 1;
-
-						elif not self.prev_box_1 is None and self.prev_box_2 is None:
-							self.prev_box_1 = self.box_1
-							self.box_1 = filtered_boxes[i]
-							self.prev_first_hand_shape = self.first_hand_shape
-							self.first_hand_shape = filtered_classes[i];
-							self.gestures_queue_first.queue.clear()
-							self.gestures_queue_second.queue.clear()
-
-							for j in range(3):
-								self.gestures_queue_first.put(-1)
-								self.gestures_queue_second.put(-1)
-
-						if not list(self.gestures_queue_first.queue)[2] == detector_utils.is_hand_opened(filtered_classes[i]):
-							self.gestures_queue_first.get()
-							self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[i]));
-
-							# print list(self.gestures_queue_first.queue)
-
-						# print '#boxes: ',len(filtered_boxes) 
-						if len(filtered_boxes)==1 and detector_utils.check_pattern(self.gestures_queue_first.queue,self.connect_pattern,self.connect_pattern) and not self.is_connected:
-							print 'Connect'
-							self.is_connected = True;
-
-						cv2.rectangle(image_np, p1, p2, (255, 0, 0), 1,)
-						cv2.putText(image_np,str(filtered_classes[i]),(int(left)-5, int(top)-5),cv2.FONT_HERSHEY_SIMPLEX,1,255)
-
-					if accepted_hands_count == 2:
-						self.prev_second_hand_shape = self.second_hand_shape
-						self.second_hand_shape = filtered_classes[i];
-
-						self.prev_box_2 = self.box_2;
-						self.box_2 = filtered_boxes[i]
-
-						self.second_sample_points_xy = [(int(left+width/4),int(top+height/4)),
-												(int(right-width/4),int(top+height/4)),
-												(int(left+width/4),int(bottom-height/4)),
-												(int(right-width/4),int(bottom-height/4)),
-												(int(right-width/2),int(bottom-height/2))]
-
-						if self.first_hand_shape ==6.0 and self.second_hand_shape == 6.0:
-							if self.first_sample_points_xy[0][0]>self.second_sample_points_xy[0][0]:
-								image_np = detector_utils.draw_steering_wheel(image_np,self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1])
-							else:
-								image_np = detector_utils.draw_steering_wheel(image_np,self.second_sample_points_xy[0][1]-self.first_sample_points_xy[0][1])
-						# else:
-						# 	print self.first_hand_shape,self.second_hand_shape
-
-						for k in range(5):
-							cv2.circle(image_np,self.second_sample_points_xy[k], 2, (0,0,255), -1)
-							cv2.line(image_np,self.prev_second_sample_points_xy[k],self.second_sample_points_xy[k],(255,0,0),1)
-						self.prev_second_sample_points_xy = self.second_sample_points_xy
-						cv2.rectangle(image_np, p1, p2, (0, 0, 255), 1)
-						cv2.putText(image_np,str(filtered_classes[i]),(int(left)-5, int(top)-5),cv2.FONT_HERSHEY_SIMPLEX,1,255)
-
-						'''
 				# image_np = detector_utils.draw_steering_wheel(image_np,50)
 				image_np = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR);
 				self.output_img=image_np#[0:image_np.shape[0],0:image_np.shape[1],:]=image_np;

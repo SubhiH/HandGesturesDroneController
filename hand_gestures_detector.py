@@ -15,6 +15,7 @@ from PIL import ImageTk
 import matplotlib.animation as animation
 import numpy as np
 import Queue
+from autopilot.autopilot import autopilot
 
 
 
@@ -65,7 +66,7 @@ class hand_gesture_detector:
 		self.scrolled_text.tag_config('telemetry', foreground='green')
 		self.scrolled_text.tag_config('error', foreground='green')
 		####
-		
+
 		#
 		self.streaming_thread = threading.Thread(target=self.videoLoop, args=())
 		self.streaming_thread.start()
@@ -87,7 +88,7 @@ class hand_gesture_detector:
 		self.start_y = int(im_height)
 
 		self.prev_first_hand_shape = -1
-		self.prev_second_hand_shape = -1   
+		self.prev_second_hand_shape = -1
 
 		self.prev_box_1 = None
 		self.prev_box_2 = None
@@ -125,7 +126,7 @@ class hand_gesture_detector:
 		control_mode['FLYING_WHEEL']=0
 		control_mode['FLYTING_RIGHT']=0
 		control_mode['FLYTING_LEFT']=0
-		
+
 
 		#initialize queues
 		for i in range(3):
@@ -146,16 +147,26 @@ class hand_gesture_detector:
 		# tkMessageBox.showinfo( "Connect", "connect_to_autopilot")
 
 	def handle_autopilot(self):
+		if not self.is_connected_to_autopilot:
+			self.autopilot_obj = autopilot()
+			self.autopilot_obj.connect('127.0.0.1',14559)
+			if not self.autopilot_obj is None:
+				self.is_connected_to_autopilot = True
+			#
+			self.autopilot_obj.change_flight_mode('guided')
+			#
+			self.autopilot_obj.arm()
+			self.autopilot_obj.takeoff(3)
 		while self.is_connected_to_autopilot:
-			if len(self.autopilot_incoming_msgs_stack)>0:
-				telemetry_msg = self.autopilot_incoming_msgs_stack.pop()
-				self.scrolled_text.insert(END, telemetry_msg+"\n", 'telemetry')
+			# if len(self.autopilot_obj.feed_back_stack)>0:
+			# 	telemetry_msg = self.autopilot_incoming_msgs_stack.pop()
+			# 	self.scrolled_text.insert(END, telemetry_msg+"\n", 'telemetry')
 
-			if len(self.autopilot_sending_msgs_stack)>0:
-				send_msg = self.autopilot_incoming_msgs_stack.pop()
-				self.scrolled_text.insert(END, telemetry_msg+"\n", 'telemetry')
+			incoming_msg = self.autopilot_obj.pop_from_feedback_stack()
+			if not incoming_msg is None:
+				self.scrolled_text.insert(END, incoming_msg+"\n", 'telemetry')
 
-			
+
 
 	def onClose(self):
 		# set the stop event, cleanup the camera, and allow the rest of
@@ -168,7 +179,7 @@ class hand_gesture_detector:
 	def videoLoop(self):
 		im_width, im_height = (int(self.video_streaming_obj.get(3)), int(self.video_streaming_obj.get(4)))
 
-		
+
 		try:
 			while not self.stopEvent.is_set():
 				_, image_np = self.video_streaming_obj.read()
@@ -188,7 +199,7 @@ class hand_gesture_detector:
 				self.panel.image = self.image
 				# self.scrolled_text.insert(END, "message to be sent \n", 'normal')
 				# self.scrolled_text.insert(END, "incoming message \n", 'telemetry')
-					
+
 
 				#filter by score
 				tmp_scores = []
@@ -245,7 +256,7 @@ class hand_gesture_detector:
 				else:
 					self.arrow_shift+=1
 
-				# Lock wheel for 3 frames in case of noise 
+				# Lock wheel for 3 frames in case of noise
 				if self.lock_wheel and self.num_of_frames_lock_wheel<3:
 					if len(filtered_scores)==2 and ((filtered_classes[0]==6.0 and not filtered_classes[1]==6.0) or (not filtered_classes[0]==6.0 and filtered_classes[1]==6.0)):
 						print 'LOCK 2 HAND...'
@@ -302,7 +313,7 @@ class hand_gesture_detector:
 
 					# self.prev_second_sample_points_xy = [(0,0),(0,0),(0,0),(0,0),(0,0)]
 					# self.second_sample_points_xy = [(0,0),(0,0),(0,0),(0,0),(0,0)]
-					
+
 				elif len(filtered_scores)==2:
 					(left_1, right_1, top_1, bottom_1) = (filtered_boxes[0][1] * im_width, filtered_boxes[0][3] * im_width,
 											filtered_boxes[0][0] * im_height, filtered_boxes[0][2] * im_height)
@@ -386,9 +397,9 @@ class hand_gesture_detector:
 
 						cv2.circle(image_np,self.second_sample_points_xy[k], 2, (0,0,255), -1)
 						cv2.line(image_np,self.prev_second_sample_points_xy[k],self.second_sample_points_xy[k],(255,0,0),1)
-				else:
-					print 'No HANDS *_*', len(filtered_boxes)
-				
+				# else:
+				# 	print 'No HANDS *_*', len(filtered_boxes)
+
 				# image_np = detector_utils.draw_steering_wheel(image_np,50)
 				image_np = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR);
 				self.output_img=image_np#[0:image_np.shape[0],0:image_np.shape[1],:]=image_np;
@@ -401,7 +412,7 @@ if __name__ == '__main__':
 	video_stream = cv2.VideoCapture(0)
 	video_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 600)
 	video_stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
-	 
+
 	start_time = datetime.datetime.now()
 	num_frames = 0
 
@@ -409,8 +420,3 @@ if __name__ == '__main__':
 	# start the app
 	hgd = hand_gesture_detector(video_stream)
 	hgd.root.mainloop()
-
-
-
-
-

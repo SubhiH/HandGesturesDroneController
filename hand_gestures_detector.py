@@ -151,9 +151,6 @@ class hand_gesture_detector:
 
 
 
-
-
-
 	def connect_to_autopilot(self):
 		if not self.ip_entry.get()=="" and not self.port_entry.get()=="":
 			if self.is_connected_to_autopilot:
@@ -164,7 +161,6 @@ class hand_gesture_detector:
 		else:
 			self.scrolled_text.insert(END, "Enter IP:Port \n", 'error')
 
-		# tkMessageBox.showinfo( "Connect", "connect_to_autopilot")
 
 	def handle_autopilot(self):
 		if not self.is_connected_to_autopilot:
@@ -217,9 +213,6 @@ class hand_gesture_detector:
 
 				self.panel.configure(image=self.image)
 				self.panel.image = self.image
-				# self.scrolled_text.insert(END, "message to be sent \n", 'normal')
-				# self.scrolled_text.insert(END, "incoming message \n", 'telemetry')
-
 
 				#filter by score
 				tmp_scores = []
@@ -319,6 +312,11 @@ class hand_gesture_detector:
 											(int(right_1-width_1/4),int(bottom_1-height_1/4)),
 											(int(right_1-width_1/2),int(bottom_1-height_1/2))]
 
+					if not list(self.gestures_queue_first.queue)[2] == detector_utils.is_hand_opened(filtered_classes[0]):
+							self.gestures_queue_first.get()
+							self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[0]));
+							print list(self.gestures_queue_first.queue)
+
 					cv2.rectangle(image_np, (int(left_1),int(top_1)), (int(right_1),int(bottom_1)), (0, 0, 255), 1)
 					cv2.putText(image_np, 'BOX',(int(right_1)-15, int(top_1)-5),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,255,0))
 					cv2.putText(image_np,str(filtered_classes[0]),(int(left_1)-5, int(top_1)-5),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0))
@@ -330,6 +328,10 @@ class hand_gesture_detector:
 					self.box_2 = None
 					self.prev_second_hand_shape = None
 					self.second_hand_shape = None
+					self.gestures_queue_second.queue.clear()
+					for j in range(3):
+						self.gestures_queue_second.put(-1)
+
 
 					# self.prev_second_sample_points_xy = [(0,0),(0,0),(0,0),(0,0),(0,0)]
 					# self.second_sample_points_xy = [(0,0),(0,0),(0,0),(0,0),(0,0)]

@@ -15,7 +15,7 @@ from PIL import ImageTk
 import matplotlib.animation as animation
 import numpy as np
 import Queue
-from autopilot.autopilot import autopilot
+# from autopilot.autopilot import autopilot
 
 
 
@@ -133,6 +133,7 @@ class hand_gesture_detector:
 
 
 		self.num_of_frames_without_hands = 0
+		self.same_hand_shape_counter = 0
 		self.num_of_frames_before_flip_hand_boxes = 0
 		self.bg_frame = None
 
@@ -141,8 +142,8 @@ class hand_gesture_detector:
 
 		self.arrow_shift = 0
 
-		#initialize queues
-		for i in range(3):
+		#ini_magic_re
+		for _ in range(3):
 			self.gestures_queue_first.put(-1)
 			self.gestures_queue_second.put(-1)
 		####################################
@@ -257,12 +258,21 @@ class hand_gesture_detector:
 						filtered_boxes.append(tmp_boxes[i])
 
 				accepted_hands_count = 0;
-				# if len(filtered_scores)==0:
-				# 	self.num_of_frames_without_hands+=1
 
-				# if self.num_of_frames_without_hands >4:
-				# 	print 'New BG, No hands detected!'
-				# 	self.bg_frame = image_np
+				##If No hands appeared for 3 frames, reset the pattern Queues
+				if len(filtered_scores)==0:
+					self.num_of_frames_without_hands+=1
+					print 'No Hands...'
+				else:
+					self.num_of_frames_without_hands=0
+
+				if self.num_of_frames_without_hands >3:
+					self.gestures_queue_second.queue.clear()
+					self.gestures_queue_first.queue.clear()
+					print 'Reset Patterns...'
+					for _ in range(3):
+						self.gestures_queue_second.put(-1)
+						self.gestures_queue_first.put(-1)
 
 				if self.arrow_shift>3:
 					self.arrow_shift = 0
@@ -315,7 +325,17 @@ class hand_gesture_detector:
 					if not list(self.gestures_queue_first.queue)[2] == detector_utils.is_hand_opened(filtered_classes[0]):
 							self.gestures_queue_first.get()
 							self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[0]));
+							self.same_hand_shape_counter=0
 							print list(self.gestures_queue_first.queue)
+					else:
+						self.same_hand_shape_counter+=1
+
+					if self.same_hand_shape_counter >4:
+						self.same_hand_shape_counter=0
+						print 'Reset Patterns because of latency...'
+						self.gestures_queue_first.queue.clear()
+						for j in range(3):
+							self.gestures_queue_first.put(-1)
 
 					cv2.rectangle(image_np, (int(left_1),int(top_1)), (int(right_1),int(bottom_1)), (0, 0, 255), 1)
 					cv2.putText(image_np, 'BOX',(int(right_1)-15, int(top_1)-5),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,255,0))

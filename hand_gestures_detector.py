@@ -24,22 +24,43 @@ detection_graph, sess = detector_utils.load_inference_graph()
 class hand_gesture_detector:
 
 	def __init__(self,video_streaming_obj):
+
+		####################################
+		###########Streaming#################
+		####################################
 		self.video_streaming_obj = video_streaming_obj
 		self.frame = None
 		self.streaming_thread = None
 		self.stopEvent = threading.Event()
 
-		#Autpilot
+		self.streaming_thread = threading.Thread(target=self.videoLoop, args=())
+		self.streaming_thread.start()
+		####################################
+		####################################
+
+		####################################
+		###########Autpilot#################
+		####################################
 		self.autopilot_thread = None
 		self.autopilot_obj = None
 		self.is_connected_to_autopilot = False
-		self.autopilot_incoming_msgs_stack = []
 		self.autopilot_sending_msgs_stack = []
 
-		# max number of hands we want to detect/track
-		self.num_hands_detect = 2
+		#Control Mode
+		control_mode = {}
+		control_mode['OFF']=0
+		control_mode['ARMED']=0
+		control_mode['TAKEOFF']=0
+		control_mode['FLYING_WHEEL']=0
+		control_mode['FLYTING_RIGHT']=0
+		control_mode['FLYTING_LEFT']=0
+		####################################
+		####################################
 
-		#initialize UI window
+
+		####################################
+		########initialize UI window########
+		####################################
 		self.root = Tk()
 
 		self.panel = None
@@ -58,24 +79,26 @@ class hand_gesture_detector:
 		self.port_entry.grid(row=1,column=1,sticky=NW)
 		self.connect_btn = Button(self.root, text ="Connect", command = self.connect_to_autopilot).grid(row=1,column=2,sticky=NW,padx=5)
 
-		# self.ip_entry.pack(side=LEFT,pady=(5,0))
 		self.scrolled_text= ScrolledText(self.root, wrap=tk.WORD,width=40,bg='black')
 		self.scrolled_text.grid(row=2,column=0,columnspan=3)
-		# self.scrolled_text.pack(side=LEFT,pady=(50,0), expand=1)
 		self.scrolled_text.tag_config('normal', foreground='white')
 		self.scrolled_text.tag_config('telemetry', foreground='green')
-		self.scrolled_text.tag_config('error', foreground='green')
-		####
-
-		#
-		self.streaming_thread = threading.Thread(target=self.videoLoop, args=())
-		self.streaming_thread.start()
+		self.scrolled_text.tag_config('error', foreground='red')
 
 		# set a callback to handle when the window is closed
 		self.root.wm_title("Hand Gestures Detector")
 		self.root.wm_protocol("WM_DELETE_WINDOW", self.onClose)
+		####################################
+		####################################
 
-		# Detection parameters
+		####################################
+		#########Detection Variables########
+		####################################
+
+		# max number of hands we want to detect/track
+		self.num_hands_detect = 2
+
+		#
 
 		self.prev_first_sample_points_xy = [(0,0),(0,0),(0,0),(0,0),(0,0)]
 		self.first_sample_points_xy = [(0,0),(0,0),(0,0),(0,0),(0,0)]
@@ -118,20 +141,17 @@ class hand_gesture_detector:
 
 		self.arrow_shift = 0
 
-		#Control Mode
-		control_mode = {}
-		control_mode['OFF']=0
-		control_mode['ARMED']=0
-		control_mode['TAKEOFF']=0
-		control_mode['FLYING_WHEEL']=0
-		control_mode['FLYTING_RIGHT']=0
-		control_mode['FLYTING_LEFT']=0
-
-
 		#initialize queues
 		for i in range(3):
 			self.gestures_queue_first.put(-1)
 			self.gestures_queue_second.put(-1)
+		####################################
+		####################################
+
+
+
+
+
 
 
 	def connect_to_autopilot(self):

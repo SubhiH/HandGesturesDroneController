@@ -15,7 +15,7 @@ from PIL import ImageTk
 import matplotlib.animation as animation
 import numpy as np
 import Queue
-# from autopilot.autopilot import autopilot
+from autopilot.autopilot import autopilot
 
 
 
@@ -126,7 +126,7 @@ class hand_gesture_detector:
 		self.gestures_queue_second = Queue.Queue()
 
 		self.is_connected = False
-		self.connect_pattern = [1, 0, 1]
+		self.arm_pattern = [1, 0, 1]
 		self.score_thresh = 0.7
 
 		self.output_img = np.zeros((700,1200,3),dtype= np.uint8)
@@ -169,19 +169,21 @@ class hand_gesture_detector:
 			self.autopilot_obj.connect('127.0.0.1',14559)
 			if not self.autopilot_obj is None:
 				self.is_connected_to_autopilot = True
-			#
+			#just for test
+			# self.is_connected_to_autopilot = True
+			# #
 			self.autopilot_obj.change_flight_mode('guided')
 			#
 			self.autopilot_obj.arm()
 			self.autopilot_obj.takeoff(3)
 		while self.is_connected_to_autopilot:
-			# if len(self.autopilot_obj.feed_back_stack)>0:
-			# 	telemetry_msg = self.autopilot_incoming_msgs_stack.pop()
-			# 	self.scrolled_text.insert(END, telemetry_msg+"\n", 'telemetry')
 
 			incoming_msg = self.autopilot_obj.pop_from_feedback_stack()
 			if not incoming_msg is None:
 				self.scrolled_text.insert(END, incoming_msg+"\n", 'telemetry')
+
+			if len(self.autopilot_sending_msgs_stack)>0:
+				self.scrolled_text.insert(END, self.autopilot_sending_msgs_stack.pop()+"\n", 'normal')
 
 
 
@@ -250,8 +252,8 @@ class hand_gesture_detector:
 							print 'There is intersection'
 							if w*h> 0.8*area_1:
 								print 'redundant'
-								redundant = True;
-								break;
+								redundant = True
+								break
 					if not redundant:
 						filtered_scores.append(tmp_scores[i])
 						filtered_classes.append(tmp_classes[i])
@@ -327,6 +329,9 @@ class hand_gesture_detector:
 							self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[0]));
 							self.same_hand_shape_counter=0
 							print list(self.gestures_queue_first.queue)
+							if detector_utils.check_pattern(self.gestures_queue_first.queue,self.arm_pattern,self.arm_pattern):
+								self.autopilot_sending_msgs_stack.insert(0,"ARM Command is Sent")
+								self.is_connected = True;
 					else:
 						self.same_hand_shape_counter+=1
 
@@ -393,6 +398,13 @@ class hand_gesture_detector:
 													(int(coordinates[left_box_index][1]-coordinates[left_box_index][4]/4),int(coordinates[left_box_index][3]-coordinates[left_box_index][5]/4)),
 													(int(coordinates[left_box_index][1]-coordinates[left_box_index][4]/2),int(coordinates[left_box_index][3]-coordinates[left_box_index][5]/2))]
 
+
+
+					if not list(self.gestures_queue_first.queue)[2] == detector_utils.is_hand_opened(filtered_classes[left_box_index]):
+						self.gestures_queue_first.get()
+						self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[left_box_index]));
+						print '2 first hand: ',list(self.gestures_queue_first.queue)
+
 					cv2.rectangle(image_np, (int(coordinates[left_box_index][0]),int(coordinates[left_box_index][2])), (int(coordinates[left_box_index][1]),int(coordinates[left_box_index][3])), (0, 0, 255), 1)
 					cv2.putText(image_np, 'BOX1',(int(coordinates[left_box_index][1])-20, int(coordinates[left_box_index][2])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(0,255,0))
 					cv2.putText(image_np,str(filtered_classes[left_box_index]),(int(coordinates[left_box_index][0])-5, int(coordinates[left_box_index][2])-5),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0))
@@ -408,6 +420,11 @@ class hand_gesture_detector:
 													(int(coordinates[rigth_box_index][0]+coordinates[rigth_box_index][4]/4),int(coordinates[rigth_box_index][3]-coordinates[rigth_box_index][5]/4)),
 													(int(coordinates[rigth_box_index][1]-coordinates[rigth_box_index][4]/4),int(coordinates[rigth_box_index][3]-coordinates[rigth_box_index][5]/4)),
 													(int(coordinates[rigth_box_index][1]-coordinates[rigth_box_index][4]/2),int(coordinates[rigth_box_index][3]-coordinates[rigth_box_index][5]/2))]
+
+					if not list(self.gestures_queue_second.queue)[2] == detector_utils.is_hand_opened(filtered_classes[rigth_box_index]):
+						self.gestures_queue_second.get()
+						self.gestures_queue_second.put(detector_utils.is_hand_opened(filtered_classes[rigth_box_index]));
+						print '2 second hand: ',list(self.gestures_queue_second.queue)
 
 					cv2.rectangle(image_np, (int(coordinates[rigth_box_index][0]),int(coordinates[rigth_box_index][2])), (int(coordinates[rigth_box_index][1]),int(coordinates[rigth_box_index][3])), (255, 0, 0), 1)
 					cv2.putText(image_np, 'BOX2',(int(coordinates[rigth_box_index][1])-20, int(coordinates[rigth_box_index][2])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,0,0))

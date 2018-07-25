@@ -24,7 +24,7 @@ detection_graph, sess = detector_utils.load_inference_graph()
 #Control Command
 control_command = {}
 control_command['ARM_TAKEOFF']=0
-control_command['FLYING_WHEEL']=1
+control_command['MOVE']=1
 control_command['FLYTING_RIGHT']=2
 control_command['FLYTING_LEFT']=3
 control_command['FLYTING_BACK']=4
@@ -54,6 +54,7 @@ class hand_gesture_detector:
 		self.autopilot_obj = None
 		self.is_connected_to_autopilot = False
 		self.autopilot_sending_msgs_stack = []
+		self.autopilot_speed_shift = []
 		self.autopilot_log = []
 
 		####################################
@@ -356,7 +357,8 @@ class hand_gesture_detector:
 					cv2.putText(image_np,str(filtered_classes[0]),(int(left_1)-5, int(top_1)-5),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0))
 					for k in range(5):
 						cv2.circle(image_np,self.first_sample_points_xy[k], 2, (0,0,255), -1)
-						cv2.line(image_np,self.prev_first_sample_points_xy[k],self.first_sample_points_xy[k],(255,0,0),1)
+						if not self.prev_first_sample_points_xy[k] == (0,0):
+							cv2.line(image_np,self.prev_first_sample_points_xy[k],self.first_sample_points_xy[k],(255,0,0),1)
 
 					self.prev_box_2 = None
 					self.box_2 = None
@@ -443,6 +445,29 @@ class hand_gesture_detector:
 					if  not detector_utils.is_hand_opened(self.first_hand_shape) and not detector_utils.is_hand_opened(self.second_hand_shape):
 						self.lock_wheel = True
 						self.num_of_frames_lock_wheel=0
+						shift = self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1]
+						if shift<-75:
+							self.autopilot_speed_shift.insert(0,(0.5,2))
+						elif shift>-75 and shift<-50:
+							self.autopilot_speed_shift.insert(0,(1,1.5))
+						elif shift>-50 and shift<-25:
+							self.autopilot_speed_shift.insert(0,(1.5,1))
+						elif shift>-25 and shift<-15:
+							self.autopilot_speed_shift.insert(0,(2,0.5))
+						elif shift>-15 and shift<15:
+							self.autopilot_speed_shift.insert(0,(2,0))
+						elif shift>15 and shift<25:
+							self.autopilot_speed_shift.insert(0,(2,-0.5))
+						elif shift>25 and shift<50:
+							self.autopilot_speed_shift.insert(0,(1.5,-1))
+						elif shift>50 and shift<75:
+							self.autopilot_speed_shift.insert(0,(1,-1.5))
+						elif shift>75:
+							self.autopilot_speed_shift.insert(0,(0.5,-2))
+						global control_command
+						self.autopilot_sending_msgs_stack.insert(0,control_command['MOVE'])
+						self.autopilot_log.insert(0,"MOVE Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1]))
+						print("MOVE Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1]))
 						image_np = detector_utils.draw_steering_wheel(image_np,self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1])
 						# if self.first_sample_points_xy[0][0]>self.second_sample_points_xy[0][0]:
 						# 	image_np = detector_utils.draw_steering_wheel(image_np,self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1])
@@ -461,10 +486,12 @@ class hand_gesture_detector:
 					#show sample points for each detected hand
 					for k in range(5):
 						cv2.circle(image_np,self.first_sample_points_xy[k], 2, (0,0,255), -1)
-						cv2.line(image_np,self.prev_first_sample_points_xy[k],self.first_sample_points_xy[k],(255,0,0),1)
+						if not self.prev_first_sample_points_xy[k] == (0,0):
+							cv2.line(image_np,self.prev_first_sample_points_xy[k],self.first_sample_points_xy[k],(255,0,0),1)
 
 						cv2.circle(image_np,self.second_sample_points_xy[k], 2, (0,0,255), -1)
-						cv2.line(image_np,self.prev_second_sample_points_xy[k],self.second_sample_points_xy[k],(255,0,0),1)
+						if not self.prev_second_sample_points_xy[k] == (0,0):
+							cv2.line(image_np,self.prev_second_sample_points_xy[k],self.second_sample_points_xy[k],(255,0,0),1)
 				# else:
 				# 	print 'No HANDS *_*', len(filtered_boxes)
 

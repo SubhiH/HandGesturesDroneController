@@ -130,6 +130,7 @@ class hand_gesture_detector:
 
 		self.is_connected = False
 		self.arm_pattern = [1, 0, 1]
+		self.backward_forward_pattern = [1, 0, 1]
 		self.score_thresh = 0.7
 
 		self.output_img = np.zeros((700,1200,3),dtype= np.uint8)
@@ -142,6 +143,9 @@ class hand_gesture_detector:
 
 		self.lock_wheel = False
 		self.num_of_frames_lock_wheel=0
+
+		self.is_moving_forward = True
+		self.change_moving_counter = 0
 
 		self.arrow_shift = 0
 
@@ -297,6 +301,11 @@ class hand_gesture_detector:
 							self.lock_wheel = False
 							self.num_of_frames_lock_wheel=0
 						image_np = detector_utils.draw_steering_wheel(image_np,self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1])
+						if self.is_moving_forward:
+							cv2.putText(image_np,"Forward",(int(left_1)-5, int(top_1)-5),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0))
+							cv2.putText(image_np, 'Forward',(int(100), int(100)),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,0))
+						else:
+							cv2.putText(image_np, 'Backward',(int(image_np.shape[1])-15, int(image_np.shape[0])-15),cv2.FONT_HERSHEY_SIMPLEX,0.1,(255,0,0))
 						# if self.first_sample_points_xy[0][0]>self.second_sample_points_xy[0][0]:
 						# 	image_np = detector_utils.draw_steering_wheel(image_np,self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1])
 						# else:
@@ -368,7 +377,7 @@ class hand_gesture_detector:
 					for j in range(3):
 						self.gestures_queue_second.put(-1)
 
-
+					self.change_moving_counter = 0
 					# self.prev_second_sample_points_xy = [(0,0),(0,0),(0,0),(0,0),(0,0)]
 					# self.second_sample_points_xy = [(0,0),(0,0),(0,0),(0,0),(0,0)]
 
@@ -414,7 +423,7 @@ class hand_gesture_detector:
 					if not list(self.gestures_queue_first.queue)[2] == detector_utils.is_hand_opened(filtered_classes[left_box_index]):
 						self.gestures_queue_first.get()
 						self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[left_box_index]));
-						print '2 first hand: ',list(self.gestures_queue_first.queue)
+						# print '2 first hand: ',list(self.gestures_queue_first.queue)
 
 					cv2.rectangle(image_np, (int(coordinates[left_box_index][0]),int(coordinates[left_box_index][2])), (int(coordinates[left_box_index][1]),int(coordinates[left_box_index][3])), (0, 0, 255), 1)
 					cv2.putText(image_np, 'BOX1',(int(coordinates[left_box_index][1])-20, int(coordinates[left_box_index][2])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(0,255,0))
@@ -435,7 +444,50 @@ class hand_gesture_detector:
 					if not list(self.gestures_queue_second.queue)[2] == detector_utils.is_hand_opened(filtered_classes[rigth_box_index]):
 						self.gestures_queue_second.get()
 						self.gestures_queue_second.put(detector_utils.is_hand_opened(filtered_classes[rigth_box_index]));
-						print '2 second hand: ',list(self.gestures_queue_second.queue)
+						# print '2 second hand: ',list(self.gestures_queue_second.queue)
+					if filtered_classes[left_box_index] == 3.0 and filtered_classes[left_box_index]==3.0:
+						self.change_moving_counter+=1
+					else:
+						self.change_moving_counter=0
+
+					if self.change_moving_counter>=6:
+						print ("change moving mode")
+						self.change_moving_counter=0
+						if self.is_moving_forward:
+							self.is_moving_forward = False
+						else:
+							self.is_moving_forward = True
+
+					#HERE
+					'''
+					if  list(self.gestures_queue_first.queue)[2] == detector_utils.is_hand_opened(filtered_classes[left_box_index]) and  list(self.gestures_queue_second.queue)[2] == detector_utils.is_hand_opened(filtered_classes[rigth_box_index]):
+							self.gestures_queue_first.get()
+							self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[left_box_index]));
+
+							self.gestures_queue_second.get()
+							self.gestures_queue_second.put(detector_utils.is_hand_opened(filtered_classes[rigth_box_index]));
+
+							self.same_hand_shape_counter=0
+							print 'left: ',list(self.gestures_queue_first.queue)
+							print 'right: ',list(self.gestures_queue_second.queue)
+							if detector_utils.check_pattern(self.gestures_queue_first.queue,self.arm_pattern,self.arm_pattern) and detector_utils.check_pattern(self.gestures_queue_second.queue,self.arm_pattern,self.arm_pattern):
+								global control_command
+								self.autopilot_sending_msgs_stack.insert(0,control_command['MOVE'])
+								self.autopilot_log.insert(0,"MOVE Command is Sent")
+								print("MOVE sent")
+					else:
+						self.same_hand_shape_counter+=1
+						print list(self.gestures_queue_first.queue),list(self.gestures_queue_second.queue),detector_utils.is_hand_opened(filtered_classes[rigth_box_index]),detector_utils.is_hand_opened(filtered_classes[left_box_index])
+
+					if self.same_hand_shape_counter >4:
+						self.same_hand_shape_counter=0
+						print 'Reset Patterns because of latency...'
+						self.gestures_queue_first.queue.clear()
+						self.gestures_queue_second.queue.clear()
+						for j in range(3):
+							self.gestures_queue_first.put(-1)
+							self.gestures_queue_second.put(-1)
+					'''
 
 					cv2.rectangle(image_np, (int(coordinates[rigth_box_index][0]),int(coordinates[rigth_box_index][2])), (int(coordinates[rigth_box_index][1]),int(coordinates[rigth_box_index][3])), (255, 0, 0), 1)
 					cv2.putText(image_np, 'BOX2',(int(coordinates[rigth_box_index][1])-20, int(coordinates[rigth_box_index][2])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,0,0))
@@ -446,29 +498,38 @@ class hand_gesture_detector:
 						self.lock_wheel = True
 						self.num_of_frames_lock_wheel=0
 						shift = self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1]
+						forward = 1
+						if self.is_moving_forward:
+							cv2.putText(image_np, 'Forward',(int(image_np.shape[1])-65, int(image_np.shape[0])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,255,0))
+						else:
+							forward = -1
+							cv2.putText(image_np, 'Backward',(int(image_np.shape[1])-65, int(image_np.shape[0])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,255,0))
 						if shift<-75:
-							self.autopilot_speed_shift.insert(0,(0.5,2))
+							self.autopilot_speed_shift.insert(0,(forward*0.5,2))
 						elif shift>-75 and shift<-50:
-							self.autopilot_speed_shift.insert(0,(1,1.5))
+							self.autopilot_speed_shift.insert(0,(forward*1,1.5))
 						elif shift>-50 and shift<-25:
-							self.autopilot_speed_shift.insert(0,(1.5,1))
+							self.autopilot_speed_shift.insert(0,(forward*1.5,1))
 						elif shift>-25 and shift<-15:
-							self.autopilot_speed_shift.insert(0,(2,0.5))
+							self.autopilot_speed_shift.insert(0,(forward*2,0.5))
 						elif shift>-15 and shift<15:
-							self.autopilot_speed_shift.insert(0,(2,0))
+							self.autopilot_speed_shift.insert(0,(forward*2,0))
 						elif shift>15 and shift<25:
-							self.autopilot_speed_shift.insert(0,(2,-0.5))
+							self.autopilot_speed_shift.insert(0,(forward*2,-0.5))
 						elif shift>25 and shift<50:
-							self.autopilot_speed_shift.insert(0,(1.5,-1))
+							self.autopilot_speed_shift.insert(0,(forward*1.5,-1))
 						elif shift>50 and shift<75:
-							self.autopilot_speed_shift.insert(0,(1,-1.5))
+							self.autopilot_speed_shift.insert(0,(forward*1,-1.5))
 						elif shift>75:
-							self.autopilot_speed_shift.insert(0,(0.5,-2))
+							self.autopilot_speed_shift.insert(0,(forward*0.5,-2))
 						global control_command
-						self.autopilot_sending_msgs_stack.insert(0,control_command['MOVE'])
-						self.autopilot_log.insert(0,"MOVE Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1]))
-						print("MOVE Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1]))
+						if len(self.autopilot_speed_shift)>0:
+							self.autopilot_sending_msgs_stack.insert(0,control_command['MOVE'])
+							self.autopilot_log.insert(0,"MOVE Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1]))
+							print("MOVE Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1]))
 						image_np = detector_utils.draw_steering_wheel(image_np,self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1])
+					
+
 						# if self.first_sample_points_xy[0][0]>self.second_sample_points_xy[0][0]:
 						# 	image_np = detector_utils.draw_steering_wheel(image_np,self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1])
 						# else:

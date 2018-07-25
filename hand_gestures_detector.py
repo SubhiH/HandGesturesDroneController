@@ -21,6 +21,15 @@ from autopilot.autopilot import autopilot
 
 detection_graph, sess = detector_utils.load_inference_graph()
 
+#Control Command
+control_command = {}
+control_command['ARM_TAKEOFF']=0
+control_command['FLYING_WHEEL']=1
+control_command['FLYTING_RIGHT']=2
+control_command['FLYTING_LEFT']=3
+control_command['FLYTING_BACK']=4
+control_command['LAND_DISARM']=5
+
 class hand_gesture_detector:
 
 	def __init__(self,video_streaming_obj):
@@ -45,15 +54,8 @@ class hand_gesture_detector:
 		self.autopilot_obj = None
 		self.is_connected_to_autopilot = False
 		self.autopilot_sending_msgs_stack = []
+		self.autopilot_log = []
 
-		#Control Mode
-		control_mode = {}
-		control_mode['OFF']=0
-		control_mode['ARMED']=0
-		control_mode['TAKEOFF']=0
-		control_mode['FLYING_WHEEL']=0
-		control_mode['FLYTING_RIGHT']=0
-		control_mode['FLYTING_LEFT']=0
 		####################################
 		####################################
 
@@ -172,10 +174,7 @@ class hand_gesture_detector:
 			#just for test
 			# self.is_connected_to_autopilot = True
 			# #
-			self.autopilot_obj.change_flight_mode('guided')
-			#
-			self.autopilot_obj.arm()
-			self.autopilot_obj.takeoff(3)
+			
 		while self.is_connected_to_autopilot:
 
 			incoming_msg = self.autopilot_obj.pop_from_feedback_stack()
@@ -183,7 +182,13 @@ class hand_gesture_detector:
 				self.scrolled_text.insert(END, incoming_msg+"\n", 'telemetry')
 
 			if len(self.autopilot_sending_msgs_stack)>0:
-				self.scrolled_text.insert(END, self.autopilot_sending_msgs_stack.pop()+"\n", 'normal')
+				global control_command
+				command = self.autopilot_sending_msgs_stack.pop();
+				if command == control_command['ARM_TAKEOFF']:
+					self.autopilot_obj.change_flight_mode('guided')
+					self.autopilot_obj.arm()
+					self.autopilot_obj.takeoff(3)
+				self.scrolled_text.insert(END, self.autopilot_log.pop()+"\n", 'normal')
 
 
 
@@ -202,6 +207,8 @@ class hand_gesture_detector:
 		try:
 			while not self.stopEvent.is_set():
 				_, image_np = self.video_streaming_obj.read()
+				image_np = cv2.flip(image_np, 1 )
+
 				# image_np = cv2.flip(image_np, 1)
 				try:
 					image_np = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
@@ -213,7 +220,6 @@ class hand_gesture_detector:
 				self.image = cv2.cvtColor(self.output_img,cv2.COLOR_BGR2RGB)
 				self.image = Image.fromarray(self.image)
 				self.image = ImageTk.PhotoImage(self.image)
-
 				self.panel.configure(image=self.image)
 				self.panel.image = self.image
 
@@ -330,8 +336,11 @@ class hand_gesture_detector:
 							self.same_hand_shape_counter=0
 							print list(self.gestures_queue_first.queue)
 							if detector_utils.check_pattern(self.gestures_queue_first.queue,self.arm_pattern,self.arm_pattern):
-								self.autopilot_sending_msgs_stack.insert(0,"ARM Command is Sent")
+								global control_command
+								self.autopilot_sending_msgs_stack.insert(0,control_command['ARM_TAKEOFF'])
+								self.autopilot_log.insert(0,"ARM Command is Sent")
 								self.is_connected = True;
+								print("arm sent")
 					else:
 						self.same_hand_shape_counter+=1
 
@@ -462,13 +471,15 @@ class hand_gesture_detector:
 				# image_np = detector_utils.draw_steering_wheel(image_np,50)
 				image_np = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR);
 				self.output_img=image_np#[0:image_np.shape[0],0:image_np.shape[1],:]=image_np;
+				# now = datetime.datetime.now()
+				# cv2.imwrite('/Users/Soubhi/Desktop/results/'+str(now.second)+'.png',image_np);
 
 		except RuntimeError, e:
 			print("[INFO] caught a RuntimeError")
 
 
 if __name__ == '__main__':
-	video_stream = cv2.VideoCapture(0)
+	video_stream = cv2.VideoCapture(1)
 	video_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 600)
 	video_stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
 

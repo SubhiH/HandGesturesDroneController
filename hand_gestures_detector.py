@@ -2,7 +2,6 @@ import matplotlib
 matplotlib.use("TkAgg")
 from utils import detector_utils as detector_utils
 import tkinter as tk
-from tkinter import *
 from ScrolledText import ScrolledText
 import cv2
 import tensorflow as tf
@@ -23,19 +22,26 @@ detection_graph, sess = detector_utils.load_inference_graph()
 
 #Control Command
 control_command = {}
-control_command['ARM_TAKEOFF']=0
-control_command['MOVE']=1
-control_command['FLYTING_RIGHT']=2
-control_command['FLYTING_LEFT']=3
-control_command['FLYTING_BACK']=4
-control_command['LAND_DISARM']=5
+
 
 class hand_gesture_detector:
 
 	def __init__(self,video_streaming_obj):
 
 		####################################
-		###########Streaming#################
+		########GLOBAL VARIABLES############
+		####################################
+		global control_command
+		control_command = {}
+		control_command['ARM_TAKEOFF']=0
+		control_command['MOVE']=1
+		control_command['FLYTING_RIGHT']=2
+		control_command['FLYTING_LEFT']=3
+		control_command['FLYTING_BACK']=4
+		control_command['LAND_DISARM']=5
+
+		####################################
+		###########Streaming################
 		####################################
 		self.video_streaming_obj = video_streaming_obj
 		self.frame = None
@@ -64,23 +70,23 @@ class hand_gesture_detector:
 		####################################
 		########initialize UI window########
 		####################################
-		self.root = Tk()
+		self.root = tk.Tk()
 
 		self.panel = None
 		self.image = None
 
-		self.panel = Label(image=self.image)
+		self.panel = tk.Label(image=self.image)
 		self.panel.image = self.image
-		self.panel.grid(row=0,column=3,rowspan=3,sticky=NSEW)
+		self.panel.grid(row=0,column=3,rowspan=3,sticky=tk.NSEW)
 
-		self.ip_lbl = Label( self.root, text='IP',justify=LEFT).grid(row=0,column=0,sticky=NW,padx=5)
-		self.port_lbl = Label( self.root, text='Port',justify=LEFT).grid(row=0,column=1,sticky=NW)
+		self.ip_lbl = tk.Label( self.root, text='IP',justify=tk.LEFT).grid(row=0,column=0,sticky=tk.NW,padx=5)
+		self.port_lbl = tk.Label( self.root, text='Port',justify=tk.LEFT).grid(row=0,column=1,sticky=tk.NW)
 
-		self.ip_entry = Entry(self.root,width=10)
-		self.ip_entry.grid(row=1,column=0,sticky=NW,padx=5)
-		self.port_entry = Entry(self.root,width=5)
-		self.port_entry.grid(row=1,column=1,sticky=NW)
-		self.connect_btn = Button(self.root, text ="Connect", command = self.connect_to_autopilot).grid(row=1,column=2,sticky=NW,padx=5)
+		self.ip_entry = tk.Entry(self.root,width=10)
+		self.ip_entry.grid(row=1,column=0,sticky=tk.NW,padx=5)
+		self.port_entry = tk.Entry(self.root,width=5)
+		self.port_entry.grid(row=1,column=1,sticky=tk.NW)
+		self.connect_btn = tk.Button(self.root, text ="Connect", command = self.connect_to_autopilot).grid(row=1,column=2,sticky=tk.NW,padx=5)
 
 		self.scrolled_text= ScrolledText(self.root, wrap=tk.WORD,width=40,bg='black')
 		self.scrolled_text.grid(row=2,column=0,columnspan=3)
@@ -164,12 +170,12 @@ class hand_gesture_detector:
 	def connect_to_autopilot(self):
 		if not self.ip_entry.get()=="" and not self.port_entry.get()=="":
 			if self.is_connected_to_autopilot:
-				self.scrolled_text.insert(END, "Already Connected to Vehcile! \n", 'error')
+				self.scrolled_text.insert(tk.END, "Already Connected to Vehcile! \n", 'error')
 			else:
 				self.autopilot_thread = threading.Thread(target=self.handle_autopilot, args=())
 				self.autopilot_thread.start()
 		else:
-			self.scrolled_text.insert(END, "Enter IP:Port \n", 'error')
+			self.scrolled_text.insert(tk.END, "Enter IP:Port \n", 'error')
 
 
 	def handle_autopilot(self):
@@ -186,16 +192,16 @@ class hand_gesture_detector:
 
 			incoming_msg = self.autopilot_obj.pop_from_feedback_stack()
 			if not incoming_msg is None:
-				self.scrolled_text.insert(END, incoming_msg+"\n", 'telemetry')
+				self.scrolled_text.insert(tk.END, incoming_msg+"\n", 'telemetry')
 
 			if len(self.autopilot_sending_msgs_stack)>0:
 				global control_command
-				command = self.autopilot_sending_msgs_stack.pop();
+				command = self.autopilot_sending_msgs_stack.pop()
 				if command == control_command['ARM_TAKEOFF']:
 					self.autopilot_obj.change_flight_mode('guided')
 					self.autopilot_obj.arm()
 					self.autopilot_obj.takeoff(3)
-				self.scrolled_text.insert(END, self.autopilot_log.pop()+"\n", 'normal')
+				self.scrolled_text.insert(tk.END, self.autopilot_log.pop()+"\n", 'normal')
 
 
 
@@ -242,12 +248,12 @@ class hand_gesture_detector:
 					   tmp_boxes.append(boxes[i])
 
 				#filter by score
-				filtered_scores = [];
-				filtered_classes = [];
-				filtered_boxes = [];
-				# image_np=detector_utils.draw_left_arrow(image_np);
+				filtered_scores = []
+				filtered_classes = []
+				filtered_boxes = []
+				# image_np=detector_utils.draw_left_arrow(image_np)
 				for i in range(len(tmp_scores)):
-					redundant = False;
+					redundant = False
 					(left_1, right_1, top_1, bottom_1) = (tmp_boxes[i][1] * im_width, tmp_boxes[i][3] * im_width,
 													  tmp_boxes[i][0] * im_height, tmp_boxes[i][2] * im_height)
 					area_1 = (right_1-left_1)*(bottom_1-top_1)
@@ -260,7 +266,7 @@ class hand_gesture_detector:
 						w = min(right_1, right_2) - x
 						h = min(bottom_1, bottom_2) - y
 						if w<0 or h<0:
-							continue;
+							continue
 						else:
 							print 'There is intersection'
 							if w*h> 0.8*area_1:
@@ -272,8 +278,6 @@ class hand_gesture_detector:
 						filtered_scores.append(tmp_scores[i])
 						filtered_classes.append(tmp_classes[i])
 						filtered_boxes.append(tmp_boxes[i])
-
-				accepted_hands_count = 0;
 
 				##If No hands appeared for 3 frames, reset the pattern Queues
 				if len(filtered_scores)==0:
@@ -333,7 +337,7 @@ class hand_gesture_detector:
 					self.prev_box_1 = self.box_1
 					self.box_1 = filtered_boxes[0]
 					self.prev_first_hand_shape = self.first_hand_shape
-					self.first_hand_shape = filtered_classes[0];
+					self.first_hand_shape = filtered_classes[0]
 
 					self.prev_first_sample_points_xy = self.first_sample_points_xy
 					self.first_sample_points_xy = [(int(left_1+width_1/4),int(top_1+height_1/4)),
@@ -344,14 +348,14 @@ class hand_gesture_detector:
 
 					if not list(self.gestures_queue_first.queue)[2] == detector_utils.is_hand_opened(filtered_classes[0]):
 							self.gestures_queue_first.get()
-							self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[0]));
+							self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[0]))
 							self.same_hand_shape_counter=0
 							print list(self.gestures_queue_first.queue)
 							if detector_utils.check_pattern(self.gestures_queue_first.queue,self.arm_pattern,self.arm_pattern):
 								global control_command
 								self.autopilot_sending_msgs_stack.insert(0,control_command['ARM_TAKEOFF'])
 								self.autopilot_log.insert(0,"ARM Command is Sent")
-								self.is_connected = True;
+								self.is_connected = True
 								print("arm sent")
 					else:
 						self.same_hand_shape_counter+=1
@@ -406,7 +410,7 @@ class hand_gesture_detector:
 					self.prev_box_1 = self.box_1
 					self.box_1 = filtered_boxes[left_box_index]
 					self.prev_first_hand_shape = self.first_hand_shape
-					self.first_hand_shape = filtered_classes[left_box_index];
+					self.first_hand_shape = filtered_classes[left_box_index]
 
 					self.prev_first_sample_points_xy = self.first_sample_points_xy
 											# [(int(left_1+width_1/4),int(top_1+height_1/4)),
@@ -424,7 +428,7 @@ class hand_gesture_detector:
 
 					if not list(self.gestures_queue_first.queue)[2] == detector_utils.is_hand_opened(filtered_classes[left_box_index]):
 						self.gestures_queue_first.get()
-						self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[left_box_index]));
+						self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[left_box_index]))
 						# print '2 first hand: ',list(self.gestures_queue_first.queue)
 
 					cv2.rectangle(image_np, (int(coordinates[left_box_index][0]),int(coordinates[left_box_index][2])), (int(coordinates[left_box_index][1]),int(coordinates[left_box_index][3])), (0, 0, 255), 1)
@@ -434,7 +438,7 @@ class hand_gesture_detector:
 					self.prev_box_2 = self.box_2
 					self.box_2 = filtered_boxes[rigth_box_index]
 					self.prev_second_hand_shape = self.second_hand_shape
-					self.second_hand_shape = filtered_classes[rigth_box_index];
+					self.second_hand_shape = filtered_classes[rigth_box_index]
 
 					self.prev_second_sample_points_xy = self.second_sample_points_xy
 					self.second_sample_points_xy = [(int(coordinates[rigth_box_index][0]+coordinates[rigth_box_index][4]/4),int(coordinates[rigth_box_index][2]+coordinates[rigth_box_index][5]/4)),
@@ -445,7 +449,7 @@ class hand_gesture_detector:
 
 					if not list(self.gestures_queue_second.queue)[2] == detector_utils.is_hand_opened(filtered_classes[rigth_box_index]):
 						self.gestures_queue_second.get()
-						self.gestures_queue_second.put(detector_utils.is_hand_opened(filtered_classes[rigth_box_index]));
+						self.gestures_queue_second.put(detector_utils.is_hand_opened(filtered_classes[rigth_box_index]))
 						# print '2 second hand: ',list(self.gestures_queue_second.queue)
 					if filtered_classes[left_box_index] == 3.0 and filtered_classes[left_box_index]==3.0:
 						self.change_moving_counter+=1
@@ -463,10 +467,10 @@ class hand_gesture_detector:
 					'''
 					if  list(self.gestures_queue_first.queue)[2] == detector_utils.is_hand_opened(filtered_classes[left_box_index]) and  list(self.gestures_queue_second.queue)[2] == detector_utils.is_hand_opened(filtered_classes[rigth_box_index]):
 							self.gestures_queue_first.get()
-							self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[left_box_index]));
+							self.gestures_queue_first.put(detector_utils.is_hand_opened(filtered_classes[left_box_index]))
 
 							self.gestures_queue_second.get()
-							self.gestures_queue_second.put(detector_utils.is_hand_opened(filtered_classes[rigth_box_index]));
+							self.gestures_queue_second.put(detector_utils.is_hand_opened(filtered_classes[rigth_box_index]))
 
 							self.same_hand_shape_counter=0
 							print 'left: ',list(self.gestures_queue_first.queue)
@@ -564,13 +568,13 @@ class hand_gesture_detector:
 				# 	print 'No HANDS *_*', len(filtered_boxes)
 
 				# image_np = detector_utils.draw_steering_wheel(image_np,50)
-				image_np = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR);
-				self.output_img=image_np#[0:image_np.shape[0],0:image_np.shape[1],:]=image_np;
+				image_np = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
+				self.output_img=image_np#[0:image_np.shape[0],0:image_np.shape[1],:]=image_np
 				# now = datetime.datetime.now()
-				# cv2.imwrite('/Users/Soubhi/Desktop/results/'+str(now.second)+'.png',image_np);
+				# cv2.imwrite('/Users/Soubhi/Desktop/results/'+str(now.second)+'.png',image_np)
 
 		except RuntimeError, e:
-			print("[INFO] caught a RuntimeError")
+			print("[INFO] caught a RuntimeError",str(e))
 
 
 if __name__ == '__main__':

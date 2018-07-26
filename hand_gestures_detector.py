@@ -516,6 +516,7 @@ class hand_gesture_detector:
 
 
 					#show Wheel when shapes: close close
+					global control_command
 					if  not detector_utils.is_hand_opened(self.first_hand_shape) and not detector_utils.is_hand_opened(self.second_hand_shape):
 						self.lock_wheel = True
 						self.num_of_frames_lock_wheel=0
@@ -539,7 +540,7 @@ class hand_gesture_detector:
 							self.autopilot_speed_shift.insert(0,(forward*1,-1.5))
 						elif shift>75:
 							self.autopilot_speed_shift.insert(0,(forward*0.5,-2))
-						global control_command
+						
 						if len(self.autopilot_speed_shift)>0:
 							if len(self.autopilot_move_x_y_stack)>3:
 								self.autopilot_sending_msgs_stack.pop()
@@ -560,9 +561,25 @@ class hand_gesture_detector:
 					#show arrow when shapes: open close
 					if detector_utils.is_hand_opened(self.first_hand_shape) and not detector_utils.is_hand_opened(self.second_hand_shape):
 						self.lock_wheel = False
+						self.autopilot_speed_shift.insert(0,(0,2))
+						if len(self.autopilot_move_x_y_stack)>3:
+								self.autopilot_sending_msgs_stack.pop()
+								self.autopilot_move_x_y_stack.pop()
+								self.autopilot_log.pop()
+						self.autopilot_sending_msgs_stack.insert(0,control_command['MOVE'])
+						self.autopilot_move_x_y_stack.insert(0,self.autopilot_speed_shift[0])
+						self.autopilot_log.insert(0,"MOVE RIGHT Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1]))
 						image_np = detector_utils.draw_right_arrow(image_np,self.arrow_shift)
 					elif not detector_utils.is_hand_opened(self.first_hand_shape) and  detector_utils.is_hand_opened(self.second_hand_shape):
 						self.lock_wheel = False
+						self.autopilot_speed_shift.insert(0,(0,-2))
+						if len(self.autopilot_move_x_y_stack)>3:
+								self.autopilot_sending_msgs_stack.pop()
+								self.autopilot_move_x_y_stack.pop()
+								self.autopilot_log.pop()
+						self.autopilot_sending_msgs_stack.insert(0,control_command['MOVE'])
+						self.autopilot_move_x_y_stack.insert(0,self.autopilot_speed_shift[0])
+						self.autopilot_log.insert(0,"MOVE LEFT Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1]))
 						image_np = detector_utils.draw_left_arrow(image_np,self.arrow_shift)
 
 

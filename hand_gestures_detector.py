@@ -98,6 +98,8 @@ class hand_gesture_detector:
 		#########Detection Variables########
 		####################################
 
+		self.log = []
+
 		# max number of hands we want to detect/track
 		self.num_hands_detect = 2
 
@@ -263,6 +265,7 @@ class hand_gesture_detector:
 							print 'There is intersection'
 							if w*h> 0.8*area_1:
 								print 'redundant'
+								self.log.insert(0,"Remove redundant detection!")
 								redundant = True
 								break
 					if not redundant:
@@ -302,10 +305,9 @@ class hand_gesture_detector:
 							self.num_of_frames_lock_wheel=0
 						image_np = detector_utils.draw_steering_wheel(image_np,self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1])
 						if self.is_moving_forward:
-							cv2.putText(image_np,"Forward",(int(left_1)-5, int(top_1)-5),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0))
-							cv2.putText(image_np, 'Forward',(int(100), int(100)),cv2.FONT_HERSHEY_SIMPLEX,0.6,(255,255,0))
+							cv2.putText(image_np, 'Forward',(int(image_np.shape[1])-65, int(image_np.shape[0])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,255,0))
 						else:
-							cv2.putText(image_np, 'Backward',(int(image_np.shape[1])-15, int(image_np.shape[0])-15),cv2.FONT_HERSHEY_SIMPLEX,0.1,(255,0,0))
+							cv2.putText(image_np, 'Backward',(int(image_np.shape[1])-65, int(image_np.shape[0])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,255,0))
 						# if self.first_sample_points_xy[0][0]>self.second_sample_points_xy[0][0]:
 						# 	image_np = detector_utils.draw_steering_wheel(image_np,self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1])
 						# else:
@@ -362,7 +364,7 @@ class hand_gesture_detector:
 							self.gestures_queue_first.put(-1)
 
 					cv2.rectangle(image_np, (int(left_1),int(top_1)), (int(right_1),int(bottom_1)), (0, 0, 255), 1)
-					cv2.putText(image_np, 'BOX',(int(right_1)-15, int(top_1)-5),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,255,0))
+					cv2.putText(image_np, 'H1',(int(right_1)-15, int(top_1)-5),cv2.FONT_HERSHEY_SIMPLEX,0.6,(0,255,0))
 					cv2.putText(image_np,str(filtered_classes[0]),(int(left_1)-5, int(top_1)-5),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0))
 					for k in range(5):
 						cv2.circle(image_np,self.first_sample_points_xy[k], 2, (0,0,255), -1)
@@ -426,7 +428,7 @@ class hand_gesture_detector:
 						# print '2 first hand: ',list(self.gestures_queue_first.queue)
 
 					cv2.rectangle(image_np, (int(coordinates[left_box_index][0]),int(coordinates[left_box_index][2])), (int(coordinates[left_box_index][1]),int(coordinates[left_box_index][3])), (0, 0, 255), 1)
-					cv2.putText(image_np, 'BOX1',(int(coordinates[left_box_index][1])-20, int(coordinates[left_box_index][2])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(0,255,0))
+					cv2.putText(image_np, 'H1',(int(coordinates[left_box_index][1])-20, int(coordinates[left_box_index][2])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(0,255,0))
 					cv2.putText(image_np,str(filtered_classes[left_box_index]),(int(coordinates[left_box_index][0])-5, int(coordinates[left_box_index][2])-5),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0))
 
 					self.prev_box_2 = self.box_2
@@ -451,7 +453,6 @@ class hand_gesture_detector:
 						self.change_moving_counter=0
 
 					if self.change_moving_counter>=6:
-						print ("change moving mode")
 						self.change_moving_counter=0
 						if self.is_moving_forward:
 							self.is_moving_forward = False
@@ -490,20 +491,26 @@ class hand_gesture_detector:
 					'''
 
 					cv2.rectangle(image_np, (int(coordinates[rigth_box_index][0]),int(coordinates[rigth_box_index][2])), (int(coordinates[rigth_box_index][1]),int(coordinates[rigth_box_index][3])), (255, 0, 0), 1)
-					cv2.putText(image_np, 'BOX2',(int(coordinates[rigth_box_index][1])-20, int(coordinates[rigth_box_index][2])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,0,0))
+					cv2.putText(image_np, 'H2',(int(coordinates[rigth_box_index][1])-20, int(coordinates[rigth_box_index][2])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,0,0))
 					cv2.putText(image_np,str(filtered_classes[rigth_box_index]),(int(coordinates[rigth_box_index][0])-5, int(coordinates[rigth_box_index][2])-5),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0))
+
+					#show moving direction
+					forward = 1
+					if self.is_moving_forward:
+						cv2.putText(image_np, 'Forward',(int(image_np.shape[1])-65, int(image_np.shape[0])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,255,0))
+						self.log.insert(0,"Direction Changed to Forward!")
+					else:
+						forward = -1
+						cv2.putText(image_np, 'Backward',(int(image_np.shape[1])-65, int(image_np.shape[0])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,255,0))
+						self.log.insert(0,"Direction Changed to Backward!")
+
 
 					#show Wheel when shapes: close close
 					if  not detector_utils.is_hand_opened(self.first_hand_shape) and not detector_utils.is_hand_opened(self.second_hand_shape):
 						self.lock_wheel = True
 						self.num_of_frames_lock_wheel=0
 						shift = self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1]
-						forward = 1
-						if self.is_moving_forward:
-							cv2.putText(image_np, 'Forward',(int(image_np.shape[1])-65, int(image_np.shape[0])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,255,0))
-						else:
-							forward = -1
-							cv2.putText(image_np, 'Backward',(int(image_np.shape[1])-65, int(image_np.shape[0])-5),cv2.FONT_HERSHEY_SIMPLEX,0.4,(255,255,0))
+						
 						if shift<-75:
 							self.autopilot_speed_shift.insert(0,(forward*0.5,2))
 						elif shift>-75 and shift<-50:

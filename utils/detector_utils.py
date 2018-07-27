@@ -282,6 +282,46 @@ def draw_left_arrow(img,shift_arrow):
 
     return img
 
+def draw_up_arrow(img,shift_arrow):
+    wheel_color = (200,200,200)
+    shift_from_center = 55
+    overlay = img.copy()
+    # (2) draw shapes:
+    # (3) blend with the original:
+    opacity = 0.7
+    
+    cv2.line(overlay,(int((img.shape[1]/2)),int(img.shape[0]/2)-shift_from_center-shift_arrow*5),(int(((img.shape[1]/2))),int(img.shape[0]/2)+shift_from_center-shift_arrow*5),wheel_color , 15)
+    pts = np.array([[int((img.shape[1]/2)),int((img.shape[0]/2-shift_from_center-shift_arrow*5))-25]
+    ,[int((img.shape[1]/2))-25,int((img.shape[0]/2)-shift_from_center-shift_arrow*5)],
+    [int((img.shape[1]/2))+25,int((img.shape[0]/2-shift_from_center-shift_arrow*5))]],
+    np.int32)
+    pts = pts.reshape((-1,1,2))
+    # cv2.fillPoly(img,[pts],wheel_color,-1)
+    cv2.fillPoly(overlay, [pts], wheel_color, 8)
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+    return img
+
+def draw_down_arrow(img,shift_arrow):
+    wheel_color = (200,200,200)
+    shift_from_center = 55
+    overlay = img.copy()
+    # (2) draw shapes:
+    # (3) blend with the original:
+    opacity = 0.7
+    
+    cv2.line(overlay,(int((img.shape[1]/2)),int(img.shape[0]/2)-shift_from_center+shift_arrow*5),(int(((img.shape[1]/2))),int(img.shape[0]/2)+shift_from_center+shift_arrow*5),wheel_color , 15)
+    pts = np.array([[int((img.shape[1]/2)),int((img.shape[0]/2+shift_from_center+shift_arrow*5))+25]
+    ,[int((img.shape[1]/2))-25,int((img.shape[0]/2)+shift_from_center+shift_arrow*5)],
+    [int((img.shape[1]/2))+25,int((img.shape[0]/2+shift_from_center+shift_arrow*5))]],
+    np.int32)
+    pts = pts.reshape((-1,1,2))
+    # cv2.fillPoly(img,[pts],wheel_color,-1)
+    cv2.fillPoly(overlay, [pts], wheel_color, 8)
+    cv2.addWeighted(overlay, opacity, img, 1 - opacity, 0, img)
+
+    return img
+
 def check_pattern(list_1, list_2, pattern):
     array_list_1 = np.array(list_1)
     array_list_2 = np.array(list_2)

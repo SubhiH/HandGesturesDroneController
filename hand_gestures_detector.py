@@ -563,7 +563,7 @@ class hand_gesture_detector:
 						# 	image_np = detector_utils.draw_steering_wheel(image_np,self.second_sample_points_xy[0][1]-self.first_sample_points_xy[0][1])
 
 					#show arrow when shapes: open close
-					if detector_utils.is_hand_opened(self.first_hand_shape) and not detector_utils.is_hand_opened(self.second_hand_shape):
+					if detector_utils.is_hand_opened(self.first_hand_shape)==1 and detector_utils.is_hand_opened(self.second_hand_shape)==0:
 						self.lock_wheel = False
 						self.autopilot_speed_shift.insert(0,(0,2))
 						if len(self.autopilot_move_x_y_stack)>3:
@@ -574,7 +574,7 @@ class hand_gesture_detector:
 						self.autopilot_move_x_y_stack.insert(0,self.autopilot_speed_shift[0])
 						self.autopilot_log.insert(0,"MOVE RIGHT Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1]))
 						image_np = detector_utils.draw_right_arrow(image_np,self.arrow_shift)
-					elif not detector_utils.is_hand_opened(self.first_hand_shape) and  detector_utils.is_hand_opened(self.second_hand_shape):
+					elif  detector_utils.is_hand_opened(self.first_hand_shape)==0 and  detector_utils.is_hand_opened(self.second_hand_shape)==1:
 						self.lock_wheel = False
 						self.autopilot_speed_shift.insert(0,(0,-2))
 						if len(self.autopilot_move_x_y_stack)>3:

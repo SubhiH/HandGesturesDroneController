@@ -198,8 +198,10 @@ def calculate_intersection(box_1,box_2,im_width,im_height):
 def is_hand_opened(hand_class):
     if hand_class == 5.0 or hand_class == 4.0 or hand_class == 3.0:
         return 1
-    else:
+    elif hand_class == 6.0:
         return 0
+    else:
+        return -1
 
 def draw_steering_wheel(img,rotation):
     raduis = min(img.shape[0],img.shape[1]);

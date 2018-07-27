@@ -83,9 +83,13 @@ class hand_gesture_detector:
 		self.ip_lbl = tk.Label( self.root, text='IP',justify=tk.LEFT).grid(row=0,column=0,sticky=tk.NW,padx=5)
 		self.port_lbl = tk.Label( self.root, text='Port',justify=tk.LEFT).grid(row=0,column=1,sticky=tk.NW)
 
-		self.ip_entry = tk.Entry(self.root,width=10)
+		self.ip_entry_text = tk.StringVar()
+		self.ip_entry = tk.Entry(self.root,width=10,textvariable=self.ip_entry_text)
+		self.ip_entry_text.set("127.0.0.1")
 		self.ip_entry.grid(row=1,column=0,sticky=tk.NW,padx=5)
-		self.port_entry = tk.Entry(self.root,width=5)
+		self.port_entry_text = tk.StringVar()
+		self.port_entry = tk.Entry(self.root,width=5,textvariable=self.port_entry_text)
+		self.port_entry_text.set("14559")
 		self.port_entry.grid(row=1,column=1,sticky=tk.NW)
 		self.connect_btn = tk.Button(self.root, text ="Connect", command = self.connect_to_autopilot).grid(row=1,column=2,sticky=tk.NW,padx=5)
 
@@ -182,7 +186,7 @@ class hand_gesture_detector:
 	def handle_autopilot(self):
 		if not self.is_connected_to_autopilot:
 			self.autopilot_obj = autopilot()
-			self.autopilot_obj.connect('127.0.0.1',14559)
+			self.autopilot_obj.connect(self.ip_entry.get(),int(self.port_entry.get()))
 			if not self.autopilot_obj is None:
 				self.is_connected_to_autopilot = True
 			#just for test

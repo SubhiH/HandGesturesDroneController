@@ -192,7 +192,7 @@ class hand_gesture_detector:
 			#just for test
 			# self.is_connected_to_autopilot = True
 			# #
-			
+
 		while self.is_connected_to_autopilot:
 
 			incoming_msg = self.autopilot_obj.pop_from_feedback_stack()
@@ -525,7 +525,7 @@ class hand_gesture_detector:
 						self.lock_wheel = True
 						self.num_of_frames_lock_wheel=0
 						shift = self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1]
-						
+
 						if shift<-75:
 							self.autopilot_speed_shift.insert(0,(forward*0.5,2,0))
 						elif shift>-75 and shift<-50:
@@ -544,7 +544,7 @@ class hand_gesture_detector:
 							self.autopilot_speed_shift.insert(0,(forward*1,-1.5,0))
 						elif shift>75:
 							self.autopilot_speed_shift.insert(0,(forward*0.5,-2,0))
-						
+
 						if len(self.autopilot_speed_shift)>0:
 							if len(self.autopilot_move_x_y_stack)>3:
 								self.autopilot_sending_msgs_stack.pop()
@@ -555,7 +555,7 @@ class hand_gesture_detector:
 							self.autopilot_log.insert(0,"MOVE Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1])+" Z "+str(self.autopilot_speed_shift[0][2]))
 							# print("MOVE Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1]))
 						image_np = detector_utils.draw_steering_wheel(image_np,self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1])
-					
+
 
 						# if self.first_sample_points_xy[0][0]>self.second_sample_points_xy[0][0]:
 						# 	image_np = detector_utils.draw_steering_wheel(image_np,self.first_sample_points_xy[0][1]-self.second_sample_points_xy[0][1])
@@ -565,7 +565,7 @@ class hand_gesture_detector:
 					#show arrow when shapes: open close - Move Right - Left
 					if detector_utils.is_hand_opened(self.first_hand_shape)==1 and detector_utils.is_hand_opened(self.second_hand_shape)==0:
 						self.lock_wheel = False
-						self.autopilot_speed_shift.insert(0,(0,2))
+						self.autopilot_speed_shift.insert(0,(0,2,0))
 						if len(self.autopilot_move_x_y_stack)>3:
 								self.autopilot_sending_msgs_stack.pop()
 								self.autopilot_move_x_y_stack.pop()
@@ -576,7 +576,7 @@ class hand_gesture_detector:
 						image_np = detector_utils.draw_right_arrow(image_np,self.arrow_shift)
 					elif  detector_utils.is_hand_opened(self.first_hand_shape)==0 and  detector_utils.is_hand_opened(self.second_hand_shape)==1:
 						self.lock_wheel = False
-						self.autopilot_speed_shift.insert(0,(0,-2))
+						self.autopilot_speed_shift.insert(0,(0,-2,0))
 						if len(self.autopilot_move_x_y_stack)>3:
 								self.autopilot_sending_msgs_stack.pop()
 								self.autopilot_move_x_y_stack.pop()
@@ -632,7 +632,7 @@ class hand_gesture_detector:
 
 
 if __name__ == '__main__':
-	video_stream = cv2.VideoCapture(1)
+	video_stream = cv2.VideoCapture(0)
 	video_stream.set(cv2.CAP_PROP_FRAME_WIDTH, 600)
 	video_stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 800)
 

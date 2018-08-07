@@ -205,11 +205,11 @@ class hand_gesture_detector:
 				if command == control_command['ARM_TAKEOFF']:
 					self.autopilot_obj.change_flight_mode('guided')
 					self.autopilot_obj.arm()
-					self.autopilot_obj.takeoff(0.5)
+					self.autopilot_obj.takeoff(1)
 				elif command == control_command['MOVE']:
 					if len(self.autopilot_move_x_y_stack)>0:
 						(x,y,z)=self.autopilot_move_x_y_stack.pop()
-						self.autopilot_obj.move(x,y,z,1)
+						self.autopilot_obj.move(x/2,y/2,z/2,1)
 						print 'move ',x,y,z
 				self.scrolled_text.insert(tk.END, self.autopilot_log.pop()+"\n", 'normal')
 
@@ -546,7 +546,7 @@ class hand_gesture_detector:
 							self.autopilot_speed_shift.insert(0,(forward*0.5,-2,0))
 
 						if len(self.autopilot_speed_shift)>0:
-							if len(self.autopilot_move_x_y_stack)>3:
+							while len(self.autopilot_move_x_y_stack)>3:
 								self.autopilot_sending_msgs_stack.pop()
 								self.autopilot_move_x_y_stack.pop()
 								self.autopilot_log.pop()
@@ -566,7 +566,7 @@ class hand_gesture_detector:
 					if detector_utils.is_hand_opened(self.first_hand_shape)==1 and detector_utils.is_hand_opened(self.second_hand_shape)==0:
 						self.lock_wheel = False
 						self.autopilot_speed_shift.insert(0,(0,2,0))
-						if len(self.autopilot_move_x_y_stack)>3:
+						while len(self.autopilot_move_x_y_stack)>3:
 								self.autopilot_sending_msgs_stack.pop()
 								self.autopilot_move_x_y_stack.pop()
 								self.autopilot_log.pop()
@@ -577,7 +577,7 @@ class hand_gesture_detector:
 					elif  detector_utils.is_hand_opened(self.first_hand_shape)==0 and  detector_utils.is_hand_opened(self.second_hand_shape)==1:
 						self.lock_wheel = False
 						self.autopilot_speed_shift.insert(0,(0,-2,0))
-						if len(self.autopilot_move_x_y_stack)>3:
+						while len(self.autopilot_move_x_y_stack)>3:
 								self.autopilot_sending_msgs_stack.pop()
 								self.autopilot_move_x_y_stack.pop()
 								self.autopilot_log.pop()
@@ -588,7 +588,7 @@ class hand_gesture_detector:
 					elif detector_utils.is_hand_opened(self.first_hand_shape)==0 and detector_utils.is_hand_opened(self.second_hand_shape)==-1:
 						self.lock_wheel = False
 						self.autopilot_speed_shift.insert(0,(0,0,1))
-						if len(self.autopilot_move_x_y_stack)>3:
+						while len(self.autopilot_move_x_y_stack)>3:
 								self.autopilot_sending_msgs_stack.pop()
 								self.autopilot_move_x_y_stack.pop()
 								self.autopilot_log.pop()
@@ -599,7 +599,7 @@ class hand_gesture_detector:
 					elif detector_utils.is_hand_opened(self.first_hand_shape)==-1 and detector_utils.is_hand_opened(self.second_hand_shape)==0:
 						self.lock_wheel = False
 						self.autopilot_speed_shift.insert(0,(0,0,-1))
-						if len(self.autopilot_move_x_y_stack)>3:
+						while len(self.autopilot_move_x_y_stack)>3:
 								self.autopilot_sending_msgs_stack.pop()
 								self.autopilot_move_x_y_stack.pop()
 								self.autopilot_log.pop()
@@ -607,6 +607,18 @@ class hand_gesture_detector:
 						self.autopilot_move_x_y_stack.insert(0,self.autopilot_speed_shift[0])
 						self.autopilot_log.insert(0,"MOVE UP Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1])+" Z "+str(self.autopilot_speed_shift[0][2]))
 						image_np = detector_utils.draw_up_arrow(image_np,self.arrow_shift)
+					elif detector_utils.is_hand_opened(self.first_hand_shape)==1 and detector_utils.is_hand_opened(self.second_hand_shape)==1:
+						# Clear movement
+						self.lock_wheel = False
+						self.autopilot_speed_shift.insert(0,(0,0,0))
+						while len(self.autopilot_move_x_y_stack)>3:
+								self.autopilot_sending_msgs_stack.pop()
+								self.autopilot_move_x_y_stack.pop()
+								self.autopilot_log.pop()
+						self.autopilot_sending_msgs_stack.insert(0,control_command['MOVE'])
+						self.autopilot_move_x_y_stack.insert(0,self.autopilot_speed_shift[0])
+						self.autopilot_log.insert(0,"PAUSE MOVEMENT Command is Sent X "+str(self.autopilot_speed_shift[0][0])+" Y "+str(self.autopilot_speed_shift[0][1])+" Z "+str(self.autopilot_speed_shift[0][2]))
+
 
 
 					#show sample points for each detected hand

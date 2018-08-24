@@ -1,0 +1,6 @@
+opencv-python
+tensorflow
+matplotlib
+Pillow
+scipy
+dronekit

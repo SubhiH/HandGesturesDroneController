@@ -3,11 +3,14 @@
 - A Complete system to control the drone using hand gestures. The following video shows the result of this research:
 
 
-[![Watch the video](https://github.com/SubhiH/hand_gesture_controller/blob/master/demo/demo.png)](https://www.youtube.com/watch?v=_vK-ca2MNX4)
+[![Watch the video](https://github.com/SubhiH/hand_gesture_controller/blob/master/demo/demo_1.png)](https://www.youtube.com/watch?v=_vK-ca2MNX4)
 
 - The technologies used in this research:
   - Deep Learning: SSD detector is used to recognize and localize the hands. 
   The dataset was collected and labelled for this project. It contains ~3200 samples acquired from outdoor and indoor enviromnents with one and two hands.
+  
+  ![Samples](https://github.com/SubhiH/hand_gesture_controller/blob/master/demo/demo_2.png)
+
   
   sand it is avaiable [here](https://github.com/SubhiH/hand_dataset)
 

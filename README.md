@@ -14,33 +14,57 @@
 
 [![Watch the video](https://github.com/SubhiH/hand_gesture_controller/blob/master/demo/demo_1.png)](https://www.youtube.com/watch?v=_vK-ca2MNX4)
 
-- The system proposed in this research consists of three modules:
+---
+
+- The proposed system consists of three modules:
 
   1.  **Hand Detector**: *SSD* deep neural network detector is used to recognize and localize the hands. 
-  The dataset was collected and labelled for this project and it contains ~3200 samples.It was acquired in outdoor and indoor enviromnents with one and two hands. The dataset is available in this repository [**hand_dataset**](https://github.com/SubhiH/hand_dataset)
+  The dataset was collected and labelled for this project. It contains ~3200 samples acquired in outdoor and indoor enviromnents with one and two hands. The dataset is available in this repository [**hand_dataset**](https://github.com/SubhiH/hand_dataset)
   
   ![Samples](https://github.com/SubhiH/hand_gesture_controller/blob/master/demo/demo_2.png)
   
+
+---
+
+
+  2. **Gestures Recognizer**: Image processing algorithm is developed to recognize the gestures. The user can contol the drone in a similar way he drives the car using virtual wheel. The arm and takeoff gesture is shown in the following figure.
   
-  
-  2. **Gestures Recognizer**: OpenCV is used to build image processing algorithm to recognize the gestures. The user can contol the drone in a similair way he drives the car using virtual wheel. The arm and takeoff gesture is shown in the following figure.
-  
-    ![Samples](https://github.com/SubhiH/hand_gesture_controller/blob/master/demo/demo_3.png)
+   ![Samples](https://github.com/SubhiH/hand_gesture_controller/blob/master/demo/demo_3.png)
     
     Some samples of the movement gestures:
     
-    ![Samples](https://github.com/SubhiH/hand_gesture_controller/blob/master/demo/demo_4.png)
+   ![Samples](https://github.com/SubhiH/hand_gesture_controller/blob/master/demo/demo_4.png)
+   
+---
 
-  
-  3.  Drone Controller: Ardupilot system is used in this module. A simple system is built depending on dronekit library and   MAVLink messages.
 
+  3.  Drone Controller: Ardupilot system is used in this module. A simple system is built using dronekit library and MAVLink messages.
+
+
+---
+
+## Notes:
+
+1.  Research paper of this work is under review.
+2.  Thesis of this work will be submitted to University of Oklahoma at the end of November and will be available online.
+3.  The system is tested with CPU and works in real-time.
+4.  Everyone is welcome to contribute :candy: :doughnut: :ice_cream: .
+
+
+### TO-DO :
+
+- [ ] Installation Instructions.
+- [x] Upload Dataset.
+- [x] Autpilot repo.
+- [ ] Thesis link.
+- [ ] Paper link.
 
 
 ## Citing this work
 
 If you want to cite this work, use the following:
 
-Soubhi Hadri, Hand Gestures for Drone Control Using Deep Learning, GitHub repository, https://github.com/SubhiH/hand_gesture_controller
+Soubhi Hadri, Hand Gestures for Drone Control Using Deep Learning, GitHub repository, https://github.com/SubhiH/HandGesturesDroneController
 ```bib
 @misc{Soubhi2018,
   author = {Soubhi, Hadri},
@@ -51,6 +75,14 @@ Soubhi Hadri, Hand Gestures for Drone Control Using Deep Learning, GitHub reposi
   howpublished = {\url{https://github.com/SubhiH/hand_gesture_controller}}
   }
 ```
+
+## Thanks: :pray:
+
+Special thanks to:
+
+- [Ardupilot Team and Community](http://ardupilot.org/about/team).
+- [Harrison](https://github.com/Sentdex).
+
 
 ## References
 

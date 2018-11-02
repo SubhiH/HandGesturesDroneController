@@ -59,6 +59,7 @@
 - [ ] Installation Instructions.
 - [x] Upload Dataset.
 - [x] Autpilot repo.
+- [x] GUI.
 - [ ] Thesis link.
 - [ ] Paper link.
 

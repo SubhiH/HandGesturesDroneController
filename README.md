@@ -55,9 +55,10 @@
 
 ### TO-DO :
 
-- [ ] Star the repository :wink:.
-- [ ] Installation Instructions.
-- [x] Upload Dataset.
+- [ ] Star the repository :star: :wink:.
+- [ ] Installation instructions.
+- [x] Upload dataset.
+- [x] Upload trained model.
 - [x] Autpilot repo.
 - [x] GUI.
 - [ ] Thesis link :blue_book: .

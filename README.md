@@ -18,6 +18,8 @@
 
 - The proposed system consists of three modules:
 
+---
+
   1.  **Hand Detector**: *SSD* deep neural network detector is used to recognize and localize the hands. 
   The dataset was collected and labelled for this project. It contains ~3200 samples acquired in outdoor and indoor enviromnents with one and two hands. The dataset is available in this repository [**hand_dataset**](https://github.com/SubhiH/hand_dataset)
   
@@ -38,7 +40,7 @@
 ---
 
 
-  3.  Drone Controller: Ardupilot system is used in this module. A simple system is built using dronekit library and MAVLink messages.
+  3.  **Drone Controller**: Ardupilot system is used in this module. A simple system is built using dronekit library and MAVLink messages.
 
 
 ---
@@ -53,6 +55,7 @@
 
 ### TO-DO :
 
+- [ ] Star the repository :wink:.
 - [ ] Installation Instructions.
 - [x] Upload Dataset.
 - [x] Autpilot repo.

@@ -1,4 +1,4 @@
-## Hand Gestures for Drone Control Using Deep Learning :fist:  :hand:  :point_up:  :raised_hands:
+## Hand Gestures for Drone Control Using Deep Learning 🙋:fist:  :hand:  :point_up:  :raised_hands:
 
 
 [![Apache](https://img.shields.io/badge/License-Apache--2.0-red.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -21,7 +21,7 @@
 ---
 
   1.  **Hand Detector**: *SSD* deep neural network detector is used to recognize and localize the hands. 
-  The dataset was collected and labelled for this project. It contains ~3200 samples acquired in outdoor and indoor enviromnents with one and two hands. The dataset is available in this repository [**hand_dataset**](https://github.com/SubhiH/hand_dataset)
+  The dataset was collected and labelled for this project. It contains ~3200 samples acquired in outdoor and indoor enviromnents with one and two hands. The dataset is available in this repository [**HandsDataset**](https://github.com/SubhiH/hand_dataset)
   
   ![Samples](https://github.com/SubhiH/hand_gesture_controller/blob/master/demo/demo_2.png)
   
@@ -60,8 +60,8 @@
 - [x] Upload Dataset.
 - [x] Autpilot repo.
 - [x] GUI.
-- [ ] Thesis link.
-- [ ] Paper link.
+- [ ] Thesis link :blue_book: .
+- [ ] Paper link :page_facing_up:.
 
 
 ## Citing this work
